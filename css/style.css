@@ -1,0 +1,128 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Arial", sans-serif;
+}
+body {
+    background-color: #f0f0f0;
+    overflow: hidden;
+}
+/* 被试信息输入界面 */
+#info-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #ccc;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 110;
+    text-align: center;
+}
+.info-item {
+    margin: 15px 0;
+    width: 300px;
+}
+.info-item label {
+    display: block;
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+.info-item input {
+    width: 100%;
+    height: 40px;
+    padding: 0 10px;
+    font-size: 16px;
+    border: 1px solid #999;
+    border-radius: 4px;
+}
+.info-item .error {
+    color: red;
+    font-size: 14px;
+    margin-top: 5px;
+    display: none;
+}
+#submit-info {
+    width: 200px;
+    height: 60px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+}
+#submit-info:hover {
+    background-color: #45a049;
+}
+/* 开始界面（完美居中） */
+#start-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #ccc;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    text-align: center;
+}
+#start-screen h1 {
+    margin-bottom: 30px;
+    font-size: 36px;
+}
+#start-btn {
+    width: 200px;
+    height: 80px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+#start-btn:hover {
+    background-color: #45a049;
+}
+/* 实验画布 */
+#exp-canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1024px;
+    height: 768px;
+    background-color: #000;
+    display: none;
+}
+/* 文本面板（指导语/判断/信心评分） */
+#text-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 600px;
+    background-color: rgba(0,0,0,0.8);
+    color: white;
+    font-size: 20px;
+    text-align: center;
+    padding: 40px;
+    border-radius: 10px;
+    display: none;
+    z-index: 90;
+}
+/* 隐藏类 */
+.hidden {
+    display: none !important;
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>捕捉点阵游戏</title>
+    <!-- 外部引入样式和JS库 -->
+    <link rel="stylesheet" href="./css/style.css">
+    <script src="./js/jquery.min.js"></script>
+</head>
+<body>
+    <!-- 被试信息输入界面 -->
+    <div id="info-screen">
+        <h1>捕捉点阵游戏</h1>
+        <div class="info-item">
+            <label for="subject-name">姓名（仅小写字母）：</label>
+            <input type="text" id="subject-name" placeholder="例如：zhangsan">
+            <div class="error" id="name-error">请输入仅包含小写字母的姓名！</div>
+        </div>
+        <div class="info-item">
+            <label for="subject-id">编号：</label>
+            <input type="text" id="subject-id" placeholder="例如：S001">
+            <div class="error" id="id-error">请输入被试编号！</div>
+        </div>
+        <button id="submit-info">提交信息</button>
+    </div>
+
+    <!-- 开始界面 -->
+    <div id="start-screen">
+        <h1>捕捉点阵游戏</h1>
+        <button id="start-btn">开始游戏</button>
+    </div>
+
+    <!-- 实验画布 -->
+    <canvas id="exp-canvas"></canvas>
+
+    <!-- 文本面板（指导语/判断/信心评分） -->
+    <div id="text-panel">
+        <div id="panel-content"></div>
+    </div>
+
+    <!-- 最后引入实验核心逻辑 -->
+    <script src="./js/main.js"></script>
+</body>
+</html>
