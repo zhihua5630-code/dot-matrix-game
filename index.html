@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>捕捉点阵游戏</title>
-    <!-- 外部引入样式和JS库 -->
     <link rel="stylesheet" href="./css/style.css">
     <script src="./js/jquery.min.js"></script>
 </head>
@@ -31,15 +30,16 @@
         <button id="start-btn">开始游戏</button>
     </div>
 
-    <!-- 实验画布 -->
-    <canvas id="exp-canvas"></canvas>
+    <!-- 实验画布容器（新增） -->
+    <div id="exp-container">
+        <canvas id="exp-canvas"></canvas>
+    </div>
 
-    <!-- 文本面板（指导语/判断/信心评分） -->
+    <!-- 文本面板 -->
     <div id="text-panel">
         <div id="panel-content"></div>
     </div>
 
-    <!-- 最后引入实验核心逻辑 -->
     <script src="./js/main.js"></script>
 </body>
 </html>
