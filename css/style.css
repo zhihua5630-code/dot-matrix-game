@@ -6,11 +6,11 @@
 }
 body {
     background-color: #f0f0f0;
-    overflow: hidden;
+    overflow: hidden; /* 禁止页面滚动，确保全屏效果 */
 }
 /* 被试信息输入界面 */
 #info-screen {
-    position: absolute;
+    position: fixed; /* 固定全屏 */
     top: 0;
     left: 0;
     width: 100vw;
@@ -63,7 +63,7 @@ body {
 }
 /* 开始界面（完美居中） */
 #start-screen {
-    position: absolute;
+    position: fixed; /* 固定全屏 */
     top: 0;
     left: 0;
     width: 100vw;
@@ -94,33 +94,34 @@ body {
 #start-btn:hover {
     background-color: #45a049;
 }
-/* 实验画布 */
+/* 实验画布（黑屏全屏） */
 #exp-canvas {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 1024px;
-    height: 768px;
+    position: fixed; /* 固定全屏 */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background-color: #000;
     display: none;
 }
-/* 文本面板（指导语/判断/信心评分） */
+/* 文本面板（指导语/判断/信心评分 - 文字居中+全屏） */
 #text-panel {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 800px;
-    height: 600px;
+    position: fixed; /* 固定全屏 */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background-color: rgba(0,0,0,0.8);
     color: white;
     font-size: 20px;
-    text-align: center;
+    display: none; /* 默认隐藏，通过JS控制显示 */
+    flex-direction: column;
+    justify-content: center; /* 垂直居中 */
+    align-items: center; /* 水平居中 */
     padding: 40px;
-    border-radius: 10px;
-    display: none;
+    border-radius: 0; /* 去掉圆角，纯全屏 */
     z-index: 90;
+    text-align: center; /* 文字本身居中 */
 }
 /* 隐藏类 */
 .hidden {
