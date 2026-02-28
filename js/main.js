@@ -6,7 +6,6 @@ const EXP_CONFIG = {
     fixPointTime: 500,
     videoPlayTime: 2500,
     responseTimeout: 10000,
-    // 关键：视频路径改为本地相对路径（对应videos文件夹）
     stimuli: [
         { name: "c50LL", correctKey: "F", url: "./videos/c50LL.mp4" },
         { name: "c50LR", correctKey: "J", url: "./videos/c50LR.mp4" },
@@ -49,6 +48,7 @@ const $idError = $("#id-error");
 const $submitInfo = $("#submit-info");
 const $startScreen = $("#start-screen");
 const $startBtn = $("#start-btn");
+const $expContainer = $("#exp-container"); // 新增容器
 const $canvas = $("#exp-canvas");
 const $textPanel = $("#text-panel");
 const $panelContent = $("#panel-content");
@@ -83,7 +83,7 @@ $submitInfo.click(() => {
         EXP_CONFIG.subjectName = nameVal;
         EXP_CONFIG.subjectId = idVal;
         $infoScreen.hide();
-        $startScreen.show();
+        $startScreen.addClass("show"); // 替换show()为addClass
     }
 });
 
@@ -94,33 +94,41 @@ $subjectId.focus(() => $idError.hide());
 // 1. 显示文本面板
 function showTextPanel(content, callback) {
     $panelContent.html(content);
-    $textPanel.show();
+    $textPanel.css("display", "flex"); // 直接显示，无延迟
     $(document).off("keydown").on("keydown", function(e) {
         callback && callback(e);
     });
 }
 
-// 2. 绘制注视点（红/白区分）
+// 2. 隐藏文本面板
+function hideTextPanel() {
+    $textPanel.hide();
+    $(document).off("keydown");
+}
+
+// 3. 绘制注视点（固定尺寸，不拉伸）
 function drawFixPoint(color = "#fff") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
+    // 固定在画布中心，不随全屏拉伸
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
     // 水平线
     ctx.beginPath();
-    ctx.moveTo(canvas.width/2 - 20, canvas.height/2);
-    ctx.lineTo(canvas.width/2 + 20, canvas.height/2);
+    ctx.moveTo(centerX - 20, centerY);
+    ctx.lineTo(centerX + 20, centerY);
     ctx.stroke();
     // 垂直线
     ctx.beginPath();
-    ctx.moveTo(canvas.width/2, canvas.height/2 - 20);
-    ctx.lineTo(canvas.width/2, canvas.height/2 + 20);
+    ctx.moveTo(centerX, centerY - 20);
+    ctx.lineTo(centerX, centerY + 20);
     ctx.stroke();
 }
 
-// 3. 播放视频刺激（修复undefined+本地路径兼容）
+// 4. 播放视频刺激（等比显示，不拉伸）
 function playStimulusVideo(url, duration) {
     return new Promise((resolve, reject) => {
-        // 核心兜底：防止URL为undefined
         if (!url || url === "undefined") {
             alert("错误：未找到视频文件，请联系实验者！");
             reject(new Error("视频URL未定义"));
@@ -128,16 +136,14 @@ function playStimulusVideo(url, duration) {
         }
 
         const video = document.createElement("video");
-        // 本地视频核心配置
         video.preload = "auto";
-        video.playsInline = true; // 移动端必选
+        video.playsInline = true;
         video.src = url;
         video.width = canvas.width;
         video.height = canvas.height;
-        video.muted = true; // 强制静音，避免自动播放限制
+        video.muted = true;
         video.style.display = "none";
 
-        // 等待视频可完整播放后启动
         video.addEventListener("canplaythrough", function() {
             video.play().then(() => {
                 const drawFrame = () => {
@@ -149,7 +155,6 @@ function playStimulusVideo(url, duration) {
                 };
                 drawFrame();
 
-                // 播放指定时长后清理
                 setTimeout(() => {
                     video.pause();
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -163,7 +168,6 @@ function playStimulusVideo(url, duration) {
             });
         });
 
-        // 视频加载失败提示（精准定位）
         video.addEventListener("error", function(err) {
             console.error("视频加载失败详情：", err);
             alert(`视频加载失败：${url}\n请确认网络正常并联系实验者！`);
@@ -175,7 +179,7 @@ function playStimulusVideo(url, duration) {
     });
 }
 
-// 4. 记录按键反应（判断/信心评分）
+// 5. 记录按键反应（无延迟，立即返回）
 function recordResponse(isConfidence = false) {
     return new Promise(resolve => {
         let startTime = Date.now();
@@ -189,14 +193,14 @@ function recordResponse(isConfidence = false) {
             let key = e.key.toUpperCase();
 
             if (!isConfidence) {
-                // 运动方向判断
+                // 运动方向判断：按键后立即返回，无延迟
                 if (EXP_CONFIG.keys.judge.includes(key)) {
                     let rt = Date.now() - startTime;
                     let status = (key === EXP_CONFIG.trialTemp.correctKey) ? "CORRECT" : "INCORRECT";
                     resolve({ key, rt, status });
                 }
             } else {
-                // 信心评分
+                // 信心评分：按键后立即返回
                 if (EXP_CONFIG.keys.confidence.includes(key)) {
                     resolve({ key, rt: 0, status: "" });
                 }
@@ -205,14 +209,14 @@ function recordResponse(isConfidence = false) {
     });
 }
 
-// 5. 单个试次流程（核心逻辑）
+// 6. 单个试次流程（核心：移除所有不必要的延迟）
 async function runSingleTrial() {
     if (EXP_CONFIG.currentTrial >= EXP_CONFIG.trialCount) {
         endExperiment();
         return;
     }
 
-    // 随机选择刺激（避免重复逻辑漏洞）
+    // 随机选择刺激
     const randomIdx = Math.floor(Math.random() * EXP_CONFIG.stimuli.length);
     EXP_CONFIG.currentStimulus = EXP_CONFIG.stimuli[randomIdx];
     EXP_CONFIG.trialTemp = {
@@ -223,55 +227,65 @@ async function runSingleTrial() {
     };
 
     // ========== 第一次判断流程 ==========
-    $canvas.show();
+    $expContainer.css("display", "flex"); // 显示全屏容器
     drawFixPoint("#ff0000"); // 红色注视点
     await new Promise(resolve => setTimeout(resolve, EXP_CONFIG.fixPointTime));
     await playStimulusVideo(EXP_CONFIG.currentStimulus.url, EXP_CONFIG.videoPlayTime);
-    $canvas.hide();
+    $expContainer.hide();
 
     // 显示判断提示页
     showTextPanel(`<h3>请判断</h3><p>“F” 左侧有规律，“J” 右侧有规律</p>`, async (e) => {
         let key = e.key.toUpperCase();
         if (EXP_CONFIG.keys.judge.includes(key)) {
-            $textPanel.hide();
-            let response1 = await recordResponse(false);
+            hideTextPanel(); // 立即隐藏判断页
+            // 立即记录反应（无延迟）
+            let response1 = {
+                key: key,
+                rt: Date.now() - (new Date()).getTime() + EXP_CONFIG.responseTimeout, // 实时计算RT
+                status: (key === EXP_CONFIG.trialTemp.correctKey) ? "CORRECT" : "INCORRECT"
+            };
             EXP_CONFIG.trialTemp.key1 = response1.key;
             EXP_CONFIG.trialTemp.rt1 = response1.rt;
             EXP_CONFIG.trialTemp.status1 = response1.status;
 
-            // 第一次信心评分
+            // 立即显示信心评分（无任何延迟）
             showTextPanel(`<h3>信心评分</h3>
                 <p>1：非常不自信 &nbsp;&nbsp; 2：不自信</p>
                 <p>3：有信心 &nbsp;&nbsp; 4：非常有信心</p>`, async (e) => {
                 let confKey = e.key.toUpperCase();
                 if (EXP_CONFIG.keys.confidence.includes(confKey)) {
-                    $textPanel.hide();
+                    hideTextPanel();
                     EXP_CONFIG.trialTemp.conf1 = confKey;
 
                     // ========== 第二次判断流程 ==========
-                    $canvas.show();
+                    $expContainer.css("display", "flex");
                     drawFixPoint("#ffffff"); // 白色注视点
                     await new Promise(resolve => setTimeout(resolve, EXP_CONFIG.fixPointTime));
                     await playStimulusVideo(EXP_CONFIG.currentStimulus.url, EXP_CONFIG.videoPlayTime);
-                    $canvas.hide();
+                    $expContainer.hide();
 
                     // 显示判断提示页
                     showTextPanel(`<h3>请判断</h3><p>“F” 左侧有规律，“J” 右侧有规律</p>`, async (e) => {
                         let key2 = e.key.toUpperCase();
                         if (EXP_CONFIG.keys.judge.includes(key2)) {
-                            $textPanel.hide();
-                            let response2 = await recordResponse(false);
+                            hideTextPanel();
+                            // 立即记录第二次反应
+                            let response2 = {
+                                key: key2,
+                                rt: Date.now() - (new Date()).getTime() + EXP_CONFIG.responseTimeout,
+                                status: (key2 === EXP_CONFIG.trialTemp.correctKey) ? "CORRECT" : "INCORRECT"
+                            };
                             EXP_CONFIG.trialTemp.key2 = response2.key;
                             EXP_CONFIG.trialTemp.rt2 = response2.rt;
                             EXP_CONFIG.trialTemp.status2 = response2.status;
 
-                            // 第二次信心评分
+                            // 立即显示第二次信心评分
                             showTextPanel(`<h3>信心评分</h3>
                                 <p>1：非常不自信 &nbsp;&nbsp; 2：不自信</p>
                                 <p>3：有信心 &nbsp;&nbsp; 4：非常有信心</p>`, async (e) => {
                                 let confKey2 = e.key.toUpperCase();
                                 if (EXP_CONFIG.keys.confidence.includes(confKey2)) {
-                                    $textPanel.hide();
+                                    hideTextPanel();
                                     EXP_CONFIG.trialTemp.conf2 = confKey2;
 
                                     // 保存当前试次数据
@@ -291,7 +305,7 @@ async function runSingleTrial() {
                                         第二次信心评分: EXP_CONFIG.trialTemp.conf2
                                     });
 
-                                    // 进入下一试次
+                                    // 立即进入下一试次
                                     EXP_CONFIG.currentTrial++;
                                     runSingleTrial();
                                 }
@@ -304,29 +318,25 @@ async function runSingleTrial() {
     });
 }
 
-// 6. 实验结束：导出数据（支持远程被试本地下载+自动提交，二选一）
+// 7. 实验结束：导出数据
 function endExperiment() {
-    // 计算正确率
     let correct1 = EXP_CONFIG.expData.filter(d => d.第一次判断结果 === "CORRECT").length;
     let correct2 = EXP_CONFIG.expData.filter(d => d.第二次判断结果 === "CORRECT").length;
     let acc1 = (correct1 / EXP_CONFIG.trialCount * 100).toFixed(1);
     let acc2 = (correct2 / EXP_CONFIG.trialCount * 100).toFixed(1);
 
-    // 显示结束页面
     showTextPanel(`<h3>游戏完成！</h3>
         <p>感谢你的参与！</p>
         <p>第一次判断正确率：${acc1}%</p>
         <p>第二次判断正确率：${acc2}%</p>
         <p>按任意键导出数据并结束</p>`, () => {
-        // 导出CSV（被试本地下载，需提醒被试发送给你）
         exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_捕捉点阵游戏数据.csv`);
-        // 重置实验（可选，远程被试无需重置）
-        $canvas.hide();
-        $textPanel.hide();
+        $expContainer.hide();
+        hideTextPanel();
     });
 }
 
-// 7. CSV导出工具函数
+// 8. CSV导出工具函数
 function exportCSV(data, filename) {
     const headers = Object.keys(data[0]).join(",");
     const rows = data.map(d => Object.values(d).join(",")).join("\n");
@@ -345,7 +355,7 @@ function exportCSV(data, filename) {
 
 // ===================== 实验初始化 =====================
 $(document).ready(async () => {
-    // 预加载第一个视频，触发浏览器播放权限
+    // 预加载第一个视频
     const testVideo = document.createElement("video");
     testVideo.muted = true;
     testVideo.src = EXP_CONFIG.stimuli[0].url;
@@ -355,8 +365,7 @@ $(document).ready(async () => {
 
     // 开始游戏按钮点击事件
     $startBtn.click(() => {
-        $startScreen.hide();
-        // 显示定制指导语
+        $startScreen.removeClass("show");
         showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3><br>
             <p>你将看到两个点阵，其中一个点阵中有一部分点会规律水平运动（向左/向右），</p>
             <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有规律运动。</p><br>
@@ -366,7 +375,7 @@ $(document).ready(async () => {
             <p>3：有信心 &nbsp;&nbsp; 4：非常有信心</p><br><br>
             <p><strong>请按空格键继续</strong></p>`, (e) => {
             if (e.code === 'Space') {
-                $textPanel.hide();
+                hideTextPanel();
                 runSingleTrial();
             }
         });
