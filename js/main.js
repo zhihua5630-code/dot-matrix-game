@@ -3,15 +3,15 @@ const EXP_CONFIG = {
     subjectId: "",
     trialCount: 16,
 
-    // ====================== 核心时序配置（按你要求） ======================
-    fix1:    1500,   // 红色注视点 1500ms
-    blank1:  100,    // 空屏 100ms
-    video1:  2500,   // 点阵总呈现 2500ms（视频2000ms + 定格500ms）
+    // ====================== 你最终确认的精准时序 ======================
+    fix1:    1500,   // 红色注视点 1500ms ✅
+    blank1:  100,    // 空屏 100ms ✅（你刚确认的）
+    video1:  2500,   // 点阵呈现 2500ms（2000播放+500定格）✅
 
-    fix2:    500,    // 白色注视点 500ms
-    blank2:  100,    // 空屏 100ms
-    video2:  2500,   // 第二次点阵总呈现 2500ms
-    // =====================================================================
+    fix2:    500,    // 白色注视点 500ms ✅
+    blank2:  100,    // 空屏 100ms ✅
+    video2:  2500,   // 第二次点阵呈现 2500ms ✅
+    // ==================================================================
 
     responseTimeout: 10000,
 
@@ -75,7 +75,10 @@ $submitInfo.click(() => {
 function showTextPanel(content, callback) {
     $panelContent.html(content);
     $textPanel.css("display", "flex");
-    $(document).off("keydown").on("keydown", e => callback(e));
+    $(document).off("keydown").one("keydown", (e) => {
+        callback(e);
+        hideTextPanel();
+    });
 }
 
 function hideTextPanel() {
@@ -100,7 +103,6 @@ function clearCanvas() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
 }
 
-// ====================== 核心修复：视频播放2000ms + 定格500ms = 2500ms ======================
 function playFragment(url, totalDuration) {
     return new Promise(resolve => {
         let vid = document.createElement("video");
@@ -114,26 +116,21 @@ function playFragment(url, totalDuration) {
 
         vid.oncanplay = () => {
             vid.play().then(() => {
-                // 绘制视频帧（视频结束后定格最后一帧）
                 let drawFrame = () => {
-                    // 即使视频播放结束，仍绘制最后一帧（实现定格效果）
                     ctx.clearRect(0,0,canvas.width,canvas.height);
                     ctx.drawImage(vid,0,0,canvas.width,canvas.height);
-                    
-                    // 视频未暂停时继续绘制，暂停后停止（但最后一帧已画在画布）
                     if (!vid.paused) {
                         requestAnimationFrame(drawFrame);
                     }
                 };
                 drawFrame();
 
-                // 总时长控制：2500ms后停止
                 setTimeout(() => {
-                    vid.pause();    // 暂停视频
-                    vid.remove();   // 移除视频元素
-                    clearCanvas();  // 清空画布
-                    resolve();      // 完成流程
-                }, totalDuration); // 直接使用2500ms总时长
+                    vid.pause();
+                    vid.remove();
+                    clearCanvas();
+                    resolve();
+                }, totalDuration);
             });
         };
     });
@@ -141,29 +138,6 @@ function playFragment(url, totalDuration) {
 
 function wait(ms) {
     return new Promise(r => setTimeout(r, ms));
-}
-
-function getResponse() {
-    return new Promise(resolve => {
-        let t = Date.now();
-        $(document).off("keydown").on("keydown", e => {
-            let k = e.key.toUpperCase();
-            if (EXP_CONFIG.keys.judge.includes(k)) {
-                let rt = Date.now() - t;
-                let cor = k === EXP_CONFIG.currentStimulus.correctKey ? "CORRECT" : "INCORRECT";
-                resolve({ key:k, rt, cor });
-            }
-        });
-    });
-}
-
-function getConf() {
-    return new Promise(resolve => {
-        $(document).off("keydown").on("keydown", e => {
-            let c = e.key;
-            if (EXP_CONFIG.keys.confidence.includes(c)) resolve(c);
-        });
-    });
 }
 
 async function runSingleTrial() {
@@ -183,7 +157,7 @@ async function runSingleTrial() {
     clearCanvas();
     await wait(EXP_CONFIG.blank1);
 
-    await playFragment(s.url, EXP_CONFIG.video1); // 总呈现2500ms
+    await playFragment(s.url, EXP_CONFIG.video1);
 
     $expContainer.hide();
     showTextPanel(`<h3>请判断</h3><p>“F” 左侧有规律，“J” 右侧有规律</p>`, async () => {
@@ -205,7 +179,7 @@ async function runSingleTrial() {
             clearCanvas();
             await wait(EXP_CONFIG.blank2);
 
-            await playFragment(s.url, EXP_CONFIG.video2); // 总呈现2500ms
+            await playFragment(s.url, EXP_CONFIG.video2);
 
             $expContainer.hide();
             showTextPanel(`<h3>请判断</h3><p>“F” 左侧有规律，“J” 右侧有规律</p>`, async () => {
@@ -238,6 +212,29 @@ async function runSingleTrial() {
                     runSingleTrial();
                 });
             });
+        });
+    });
+}
+
+function getResponse() {
+    return new Promise(resolve => {
+        let t = Date.now();
+        $(document).off("keydown").one("keydown", e => {
+            let k = e.key.toUpperCase();
+            if (EXP_CONFIG.keys.judge.includes(k)) {
+                let rt = Date.now() - t;
+                let cor = k === EXP_CONFIG.currentStimulus.correctKey ? "CORRECT" : "INCORRECT";
+                resolve({ key:k, rt, cor });
+            }
+        });
+    });
+}
+
+function getConf() {
+    return new Promise(resolve => {
+        $(document).off("keydown").one("keydown", e => {
+            let c = e.key;
+            if (EXP_CONFIG.keys.confidence.includes(c)) resolve(c);
         });
     });
 }
