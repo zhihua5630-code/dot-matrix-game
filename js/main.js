@@ -3,14 +3,15 @@ const EXP_CONFIG = {
     subjectId: "",
     trialCount: 16,
 
-    // —————————————— 修正后的精确时间 ——————————————
-    fix1: 1500,    // 红色注视点
-    blank1: 100,   // 空屏
-    video1: 500,   // 点阵呈现 500ms
+    // ====================== 核心时序配置（按你要求） ======================
+    fix1:    1500,   // 红色注视点 1500ms
+    blank1:  100,    // 空屏 100ms
+    video1:  2500,   // 点阵总呈现 2500ms（视频2000ms + 定格500ms）
 
-    fix2: 500,     // 白色注视点
-    blank2: 100,   // 空屏
-    video2: 500,   // 第二次点阵 500ms
+    fix2:    500,    // 白色注视点 500ms
+    blank2:  100,    // 空屏 100ms
+    video2:  2500,   // 第二次点阵总呈现 2500ms
+    // =====================================================================
 
     responseTimeout: 10000,
 
@@ -33,7 +34,10 @@ const EXP_CONFIG = {
         { name: "c80RR", correctKey: "J", url: "./videos/c80RR.mp4" },
     ],
 
-    keys: { judge: ["F", "J"], confidence: ["1","2","3","4"] },
+    keys: {
+        judge: ["F", "J"],
+        confidence: ["1","2","3","4"]
+    },
     expData: [],
     currentTrial: 0,
     currentStimulus: null
@@ -96,7 +100,8 @@ function clearCanvas() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
 }
 
-function playFragment(url, duration) {
+// ====================== 核心修复：视频播放2000ms + 定格500ms = 2500ms ======================
+function playFragment(url, totalDuration) {
     return new Promise(resolve => {
         let vid = document.createElement("video");
         vid.src = url;
@@ -109,20 +114,26 @@ function playFragment(url, duration) {
 
         vid.oncanplay = () => {
             vid.play().then(() => {
-                let anim = () => {
+                // 绘制视频帧（视频结束后定格最后一帧）
+                let drawFrame = () => {
+                    // 即使视频播放结束，仍绘制最后一帧（实现定格效果）
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
+                    ctx.drawImage(vid,0,0,canvas.width,canvas.height);
+                    
+                    // 视频未暂停时继续绘制，暂停后停止（但最后一帧已画在画布）
                     if (!vid.paused) {
-                        ctx.clearRect(0,0,canvas.width,canvas.height);
-                        ctx.drawImage(vid,0,0,canvas.width,canvas.height);
-                        requestAnimationFrame(anim);
+                        requestAnimationFrame(drawFrame);
                     }
                 };
-                anim();
+                drawFrame();
+
+                // 总时长控制：2500ms后停止
                 setTimeout(() => {
-                    vid.pause();
-                    vid.remove();
-                    clearCanvas();
-                    resolve();
-                }, duration);
+                    vid.pause();    // 暂停视频
+                    vid.remove();   // 移除视频元素
+                    clearCanvas();  // 清空画布
+                    resolve();      // 完成流程
+                }, totalDuration); // 直接使用2500ms总时长
             });
         };
     });
@@ -165,25 +176,27 @@ async function runSingleTrial() {
 
     $expContainer.css("display","flex");
 
-    // —————————————— 第一次流程 ——————————————
+    // ===================== 第一次流程 =====================
     drawFix("#ff0000");
     await wait(EXP_CONFIG.fix1);
 
     clearCanvas();
     await wait(EXP_CONFIG.blank1);
 
-    await playFragment(s.url, EXP_CONFIG.video1);
+    await playFragment(s.url, EXP_CONFIG.video1); // 总呈现2500ms
 
     $expContainer.hide();
-    showTextPanel("<h3>请判断</h3><p>F=左 J=右</p>", async () => {
+    showTextPanel(`<h3>请判断</h3><p>“F” 左侧有规律，“J” 右侧有规律</p>`, async () => {
         let res1 = await getResponse();
         hideTextPanel();
 
-        showTextPanel("<h3>信心</h3><p>1 2 3 4</p>", async () => {
+        showTextPanel(`<h3>信心评分</h3>
+            <p>1：非常不自信 &nbsp;&nbsp; 2：不自信</p>
+            <p>3：有信心 &nbsp;&nbsp; 4：非常有信心</p>`, async () => {
             let c1 = await getConf();
             hideTextPanel();
 
-            // —————————————— 第二次流程 ——————————————
+            // ===================== 第二次流程 =====================
             $expContainer.css("display","flex");
 
             drawFix("#ffffff");
@@ -192,22 +205,33 @@ async function runSingleTrial() {
             clearCanvas();
             await wait(EXP_CONFIG.blank2);
 
-            await playFragment(s.url, EXP_CONFIG.video2);
+            await playFragment(s.url, EXP_CONFIG.video2); // 总呈现2500ms
 
             $expContainer.hide();
-            showTextPanel("<h3>请判断</h3><p>F=左 J=右</p>", async () => {
+            showTextPanel(`<h3>请判断</h3><p>“F” 左侧有规律，“J” 右侧有规律</p>`, async () => {
                 let res2 = await getResponse();
                 hideTextPanel();
 
-                showTextPanel("<h3>信心</h3><p>1 2 3 4</p>", async () => {
+                showTextPanel(`<h3>信心评分</h3>
+                    <p>1：非常不自信 &nbsp;&nbsp; 2：不自信</p>
+                    <p>3：有信心 &nbsp;&nbsp; 4：非常有信心</p>`, async () => {
                     let c2 = await getConf();
                     hideTextPanel();
 
                     EXP_CONFIG.expData.push({
-                        被试:EXP_CONFIG.subjectName, 编号:EXP_CONFIG.subjectId,
-                        试次:EXP_CONFIG.currentTrial+1, 刺激:s.name,
-                        键1:res1.key, 反应时1:res1.rt, 正确1:res1.cor, 信心1:c1,
-                        键2:res2.key, 反应时2:res2.rt, 正确2:res2.cor, 信心2:c2
+                        被试姓名: EXP_CONFIG.subjectName,
+                        被试编号: EXP_CONFIG.subjectId,
+                        试次: EXP_CONFIG.currentTrial+1,
+                        刺激名称: s.name,
+                        正确按键: s.correctKey,
+                        第一次判断按键: res1.key,
+                        第一次反应时: res1.rt,
+                        第一次判断结果: res1.cor,
+                        第一次信心评分: c1,
+                        第二次判断按键: res2.key,
+                        第二次反应时: res2.rt,
+                        第二次判断结果: res2.cor,
+                        第二次信心评分: c2
                     });
 
                     EXP_CONFIG.currentTrial++;
@@ -219,23 +243,48 @@ async function runSingleTrial() {
 }
 
 function endExp() {
-    showTextPanel("<h3>实验结束</h3><p>按任意键保存数据</p>", () => {
-        let csv = "被试,编号,试次,刺激,键1,反应时1,正确1,信心1,键2,反应时2,正确2,信心2\n";
-        EXP_CONFIG.expData.forEach(d => {
-            csv += `${d.被试},${d.编号},${d.试次},${d.刺激},${d.键1},${d.反应时1},${d.正确1},${d.信心1},${d.键2},${d.反应时2},${d.正确2},${d.信心2}\n`;
-        });
-        let blob = new Blob([csv], {type:"text/csv"});
-        let a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `${EXP_CONFIG.subjectId}_数据.csv`;
-        a.click();
+    let correct1 = EXP_CONFIG.expData.filter(d => d.第一次判断结果 === "CORRECT").length;
+    let correct2 = EXP_CONFIG.expData.filter(d => d.第二次判断结果 === "CORRECT").length;
+    let acc1 = (correct1 / EXP_CONFIG.trialCount * 100).toFixed(1);
+    let acc2 = (correct2 / EXP_CONFIG.trialCount * 100).toFixed(1);
+
+    showTextPanel(`<h3>实验完成！</h3>
+        <p>感谢你的参与！</p>
+        <p>第一次判断正确率：${acc1}%</p>
+        <p>第二次判断正确率：${acc2}%</p>
+        <p>按任意键导出数据并结束</p>`, () => {
+        exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_捕捉点阵游戏数据.csv`);
         hideTextPanel();
+        $expContainer.hide();
     });
+}
+
+function exportCSV(data, filename) {
+    const headers = Object.keys(data[0]).join(",");
+    const rows = data.map(d => Object.values(d).join(",")).join("\n");
+    const csvContent = `${headers}\n${rows}`;
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
 $startBtn.click(() => {
     $startScreen.removeClass("show");
-    showTextPanel("<h3>按空格开始</h3>", e => {
+    showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3><br>
+        <p>你将看到两个点阵，其中一个点阵中有一部分点会规律水平运动（向左/向右），</p>
+        <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有规律运动。</p><br>
+        <p><strong>左侧有规律按“F”键，右侧有规律按“J”键</strong></p><br>
+        <p>判断后需对信心进行评分（1-4分）：</p>
+        <p>1：非常不自信 &nbsp;&nbsp; 2：不自信</p>
+        <p>3：有信心 &nbsp;&nbsp; 4：非常有信心</p><br><br>
+        <p><strong>请按空格键继续</strong></p>`, e => {
         if (e.code === "Space") {
             hideTextPanel();
             runSingleTrial();
