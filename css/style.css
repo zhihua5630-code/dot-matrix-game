@@ -6,11 +6,12 @@
 }
 body {
     background-color: #f0f0f0;
-    overflow: hidden; /* 禁止页面滚动，确保全屏效果 */
+    overflow: hidden;
 }
-/* 被试信息输入界面 */
+
+/* 被试信息输入页 */
 #info-screen {
-    position: fixed; /* 固定全屏 */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
@@ -43,7 +44,7 @@ body {
 .info-item .error {
     color: red;
     font-size: 14px;
-    margin-top: 5px;
+    margin-bottom: 5px;
     display: none;
 }
 #submit-info {
@@ -61,20 +62,27 @@ body {
 #submit-info:hover {
     background-color: #45a049;
 }
-/* 开始界面（完美居中） */
+
+/* 开始界面 */
 #start-screen {
-    position: fixed; /* 固定全屏 */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
     background-color: #ccc;
-    display: none;
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 100;
     text-align: center;
+    visibility: hidden;
+    opacity: 0;
+}
+#start-screen.show {
+    visibility: visible;
+    opacity: 1;
 }
 #start-screen h1 {
     margin-bottom: 30px;
@@ -94,19 +102,29 @@ body {
 #start-btn:hover {
     background-color: #45a049;
 }
-/* 实验画布（黑屏全屏） */
-#exp-canvas {
-    position: fixed; /* 固定全屏 */
+
+/* 实验画布：全屏但等比缩放，不拉伸（核心修复） */
+#exp-container {
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
     background-color: #000;
     display: none;
+    justify-content: center;
+    align-items: center;
 }
-/* 文本面板（指导语/判断/信心评分 - 文字居中+全屏） */
+#exp-canvas {
+    width: 1024px;
+    height: 768px;
+    /* 固定原始尺寸，通过容器居中，不拉伸 */
+    object-fit: contain;
+}
+
+/* 文本面板：全屏+文字居中 */
 #text-panel {
-    position: fixed; /* 固定全屏 */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
@@ -114,16 +132,16 @@ body {
     background-color: rgba(0,0,0,0.8);
     color: white;
     font-size: 20px;
-    display: none; /* 默认隐藏，通过JS控制显示 */
+    display: none;
     flex-direction: column;
-    justify-content: center; /* 垂直居中 */
-    align-items: center; /* 水平居中 */
+    justify-content: center;
+    align-items: center;
     padding: 40px;
-    border-radius: 0; /* 去掉圆角，纯全屏 */
+    border-radius: 0;
     z-index: 90;
-    text-align: center; /* 文字本身居中 */
+    text-align: center;
 }
-/* 隐藏类 */
+
 .hidden {
     display: none !important;
 }
