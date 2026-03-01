@@ -3,8 +3,10 @@ const EXP_CONFIG = {
     subjectName: "",
     subjectId: "",
     trialCount: 16,
-    fixPointTime: 500,
-    videoPlayTime: 2500,
+    fixPointTime1: 1500,    // 第一次红色注视点时长（修改为1500ms）
+    fixPointTime2: 500,     // 第二次白色注视点时长（保持500ms）
+    blankScreenTime: 100,   // 新增：空屏时长100ms
+    videoPlayTime: 2500,    // 保持2500ms不变
     responseTimeout: 10000,
     stimuli: [
         { name: "c50LL", correctKey: "F", url: "./videos/c50LL.mp4" },
@@ -126,6 +128,16 @@ function drawFixPoint(color = "#fff") {
     ctx.stroke();
 }
 
+// 新增：清空画布（空屏用）
+function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// 新增：等待函数（统一处理延迟）
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // 4. 播放视频刺激（等比显示，不拉伸）
 function playStimulusVideo(url, duration) {
     return new Promise((resolve, reject) => {
@@ -209,7 +221,7 @@ function recordResponse(isConfidence = false) {
     });
 }
 
-// 6. 单个试次流程（核心：移除所有不必要的延迟）
+// 6. 单个试次流程（核心：修改注视点时长+补充空屏）
 async function runSingleTrial() {
     if (EXP_CONFIG.currentTrial >= EXP_CONFIG.trialCount) {
         endExperiment();
@@ -229,8 +241,12 @@ async function runSingleTrial() {
     // ========== 第一次判断流程 ==========
     $expContainer.css("display", "flex"); // 显示全屏容器
     drawFixPoint("#ff0000"); // 红色注视点
-    await new Promise(resolve => setTimeout(resolve, EXP_CONFIG.fixPointTime));
-    await playStimulusVideo(EXP_CONFIG.currentStimulus.url, EXP_CONFIG.videoPlayTime);
+    await wait(EXP_CONFIG.fixPointTime1); // 红色注视点显示1500ms
+    
+    clearCanvas(); // 清空画布（空屏）
+    await wait(EXP_CONFIG.blankScreenTime); // 空屏100ms
+    
+    await playStimulusVideo(EXP_CONFIG.currentStimulus.url, EXP_CONFIG.videoPlayTime); // 视频2500ms
     $expContainer.hide();
 
     // 显示判断提示页
@@ -260,8 +276,12 @@ async function runSingleTrial() {
                     // ========== 第二次判断流程 ==========
                     $expContainer.css("display", "flex");
                     drawFixPoint("#ffffff"); // 白色注视点
-                    await new Promise(resolve => setTimeout(resolve, EXP_CONFIG.fixPointTime));
-                    await playStimulusVideo(EXP_CONFIG.currentStimulus.url, EXP_CONFIG.videoPlayTime);
+                    await wait(EXP_CONFIG.fixPointTime2); // 白色注视点显示500ms
+                    
+                    clearCanvas(); // 清空画布（空屏）
+                    await wait(EXP_CONFIG.blankScreenTime); // 空屏100ms
+                    
+                    await playStimulusVideo(EXP_CONFIG.currentStimulus.url, EXP_CONFIG.videoPlayTime); // 视频2500ms
                     $expContainer.hide();
 
                     // 显示判断提示页
