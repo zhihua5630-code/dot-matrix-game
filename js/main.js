@@ -412,7 +412,7 @@ $(document).ready(async () => {
             <p>你将看到两个点阵，其中一个点阵中有一部分点会规律水平运动（向左/向右），</p>
             <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有规律运动。在每一轮里，你需要完成两次判断。</p><br>
             <!-- 点阵示意图 -->
-            <img src="./images/dot-example.png" alt="点阵示意图" style="max-width: 80%; height: auto; margin: 10px auto; display: block;"><br>
+            <img src="./image/dot-example.png" alt="点阵示意图" style="max-width: 80%; height: auto; margin: 10px auto; display: block;"><br>
             <p>箭头代表点的运动方向（正式实验中没有箭头提示）。</p>
             <p>左侧代表点有规律的运动，右侧代表点无规律的运动。</p><br>
             <p style="background-color: yellow; color: black; padding: 5px;"><strong>左侧有规律用右手食指按“V”键，右侧有规律用右手中指按“B”键</strong></p><br>
@@ -428,5 +428,6 @@ $(document).ready(async () => {
         });
     });
 });
+
 
 
