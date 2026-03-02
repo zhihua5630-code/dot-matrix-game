@@ -9,25 +9,25 @@ const EXP_CONFIG = {
     videoPlayTime: 2500,    // 视频播放时长（2500ms）
     responseTimeout: 10000,
     stimuli: [
-        { name: "c50LL", correctKey: "F", url: "./videos/c50LL.mp4" },
-        { name: "c50LR", correctKey: "J", url: "./videos/c50LR.mp4" },
-        { name: "c50RL", correctKey: "F", url: "./videos/c50RL.mp4" },
-        { name: "c50RR", correctKey: "J", url: "./videos/c50RR.mp4" },
-        { name: "c60LL", correctKey: "F", url: "./videos/c60LL.mp4" },
-        { name: "c60LR", correctKey: "J", url: "./videos/c60LR.mp4" },
-        { name: "c60RL", correctKey: "F", url: "./videos/c60RL.mp4" },
-        { name: "c60RR", correctKey: "J", url: "./videos/c60RR.mp4" },
-        { name: "c70LL", correctKey: "F", url: "./videos/c70LL.mp4" },
-        { name: "c70LR", correctKey: "J", url: "./videos/c70LR.mp4" },
-        { name: "c70RL", correctKey: "F", url: "./videos/c70RL.mp4" },
-        { name: "c70RR", correctKey: "J", url: "./videos/c70RR.mp4" },
-        { name: "c80LL", correctKey: "F", url: "./videos/c80LL.mp4" },
-        { name: "c80LR", correctKey: "J", url: "./videos/c80LR.mp4" },
-        { name: "c80RL", correctKey: "F", url: "./videos/c80RL.mp4" },
-        { name: "c80RR", correctKey: "J", url: "./videos/c80RR.mp4" },
+        { name: "c50LL", correctKey: "V", url: "./videos/c50LL.mp4" },  // F→V
+        { name: "c50LR", correctKey: "B", url: "./videos/c50LR.mp4" },  // J→B
+        { name: "c50RL", correctKey: "V", url: "./videos/c50RL.mp4" },  // F→V
+        { name: "c50RR", correctKey: "B", url: "./videos/c50RR.mp4" },  // J→B
+        { name: "c60LL", correctKey: "V", url: "./videos/c60LL.mp4" },  // F→V
+        { name: "c60LR", correctKey: "B", url: "./videos/c60LR.mp4" },  // J→B
+        { name: "c60RL", correctKey: "V", url: "./videos/c60RL.mp4" },  // F→V
+        { name: "c60RR", correctKey: "B", url: "./videos/c60RR.mp4" },  // J→B
+        { name: "c70LL", correctKey: "V", url: "./videos/c70LL.mp4" },  // F→V
+        { name: "c70LR", correctKey: "B", url: "./videos/c70LR.mp4" },  // J→B
+        { name: "c70RL", correctKey: "V", url: "./videos/c70RL.mp4" },  // F→V
+        { name: "c70RR", correctKey: "B", url: "./videos/c70RR.mp4" },  // J→B
+        { name: "c80LL", correctKey: "V", url: "./videos/c80LL.mp4" },  // F→V
+        { name: "c80LR", correctKey: "B", url: "./videos/c80LR.mp4" },  // J→B
+        { name: "c80RL", correctKey: "V", url: "./videos/c80RL.mp4" },  // F→V
+        { name: "c80RR", correctKey: "B", url: "./videos/c80RR.mp4" },  // J→B
     ],
     keys: {
-        judge: ["F", "J"],
+        judge: ["V", "B"],  // F/J→V/B
         confidence: ["1","2","3","4"]
     },
     expData: [],
@@ -242,7 +242,8 @@ async function runSingleTrial() {
     // 显示第一次判断提示页，并记录开始时间
     const judgeStartTime1 = Date.now();
     await new Promise(resolve => {
-        showTextPanel(`<h3>请判断</h3><p>“F” 左侧有规律，“J” 右侧有规律</p>`, async (e) => {
+        // 修改：第一次判断标题+VB键提示
+        showTextPanel(`<h3>第一次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
             let key = e.key.toUpperCase();
             if (EXP_CONFIG.keys.judge.includes(key)) {
                 hideTextPanel();
@@ -260,9 +261,11 @@ async function runSingleTrial() {
     // 显示第一次信心评分，并记录开始时间
     const confStartTime1 = Date.now();
     await new Promise(resolve => {
+        // 修改：小学生版信心评分（带表情+左手食指提示）
         showTextPanel(`<h3>信心评分</h3>
-            <p>1：非常不自信 &nbsp;&nbsp; 2：不自信</p>
-            <p>3：有信心 &nbsp;&nbsp; 4：非常有信心</p>`, async (e) => {
+            <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
+            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心</p>
+            <p>3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
             let confKey = e.key.toUpperCase();
             if (EXP_CONFIG.keys.confidence.includes(confKey)) {
                 hideTextPanel();
@@ -292,7 +295,8 @@ async function runSingleTrial() {
     // 显示第二次判断提示页，并记录开始时间
     const judgeStartTime2 = Date.now();
     await new Promise(resolve => {
-        showTextPanel(`<h3>请判断</h3><p>“F” 左侧有规律，“J” 右侧有规律</p>`, async (e) => {
+        // 修改：第二次判断标题+VB键提示
+        showTextPanel(`<h3>第二次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
             let key2 = e.key.toUpperCase();
             if (EXP_CONFIG.keys.judge.includes(key2)) {
                 hideTextPanel();
@@ -310,9 +314,11 @@ async function runSingleTrial() {
     // 显示第二次信心评分，并记录开始时间
     const confStartTime2 = Date.now();
     await new Promise(resolve => {
+        // 修改：小学生版信心评分（带表情+左手食指提示）
         showTextPanel(`<h3>信心评分</h3>
-            <p>1：非常不自信 &nbsp;&nbsp; 2：不自信</p>
-            <p>3：有信心 &nbsp;&nbsp; 4：非常有信心</p>`, async (e) => {
+            <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
+            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心</p>
+            <p>3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
             let confKey2 = e.key.toUpperCase();
             if (EXP_CONFIG.keys.confidence.includes(confKey2)) {
                 hideTextPanel();
@@ -401,13 +407,19 @@ $(document).ready(async () => {
     // 开始游戏按钮点击事件
     $startBtn.click(() => {
         $startScreen.removeClass("show");
+        // 修改：完整的欢迎指导语（含点阵示意图+两次判断提醒+VB键+表情评分）
         showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3><br>
             <p>你将看到两个点阵，其中一个点阵中有一部分点会规律水平运动（向左/向右），</p>
-            <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有规律运动。</p><br>
-            <p><strong>左侧有规律按“F”键，右侧有规律按“J”键</strong></p><br>
-            <p>判断后需对信心进行评分（1-4分）：</p>
-            <p>1：非常不自信 &nbsp;&nbsp; 2：不自信</p>
-            <p>3：有信心 &nbsp;&nbsp; 4：非常有信心</p><br><br>
+            <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有规律运动。在每一轮里，你需要完成两次判断。</p><br>
+            <!-- 点阵示意图 -->
+            <img src="https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/187ac817b57c46d89b8afcc7b77dd60c.png~tplv-a9rns2rl98-image.png?lk3s=8e244e95&rcl=20260302135538C6A7CDEE032E5ECC5635&rrcfp=dafada99&x-expires=2088654938&x-signature=cFEo9twFzU4EayCi%2FhnpjpDXY9s%3D" alt="点阵示意图" style="max-width: 80%; height: auto; margin: 10px auto; display: block;"><br>
+            <p>箭头代表点的运动方向（正式实验中没有箭头提示）。</p>
+            <p>左侧代表点有规律的运动，右侧代表点无规律的运动。</p><br>
+            <p style="background-color: yellow; color: black; padding: 5px;"><strong>左侧有规律用右手食指按“V”键，右侧有规律用右手中指按“B”键</strong></p><br>
+            <p>每次判断后，请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
+            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心</p>
+            <p>3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p><br>
+            <p>如果你理解了以上规则，请你将手指放到键盘对应的位置上</p><br>
             <p><strong>请按空格键继续</strong></p>`, (e) => {
             if (e.code === 'Space') {
                 hideTextPanel();
