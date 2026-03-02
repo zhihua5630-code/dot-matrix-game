@@ -243,7 +243,7 @@ async function runSingleTrial() {
     const judgeStartTime1 = Date.now();
     await new Promise(resolve => {
         // 修改：第一次判断标题+VB键提示
-        showTextPanel(`<h3>第一次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
+        showTextPanel(`<h3>请做第一次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
             let key = e.key.toUpperCase();
             if (EXP_CONFIG.keys.judge.includes(key)) {
                 hideTextPanel();
@@ -296,7 +296,7 @@ async function runSingleTrial() {
     const judgeStartTime2 = Date.now();
     await new Promise(resolve => {
         // 修改：第二次判断标题+VB键提示
-        showTextPanel(`<h3>第二次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
+        showTextPanel(`<h3>请做第二次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
             let key2 = e.key.toUpperCase();
             if (EXP_CONFIG.keys.judge.includes(key2)) {
                 hideTextPanel();
@@ -428,4 +428,5 @@ $(document).ready(async () => {
         });
     });
 });
+
 
