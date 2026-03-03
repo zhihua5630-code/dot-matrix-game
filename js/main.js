@@ -408,7 +408,7 @@ $(document).ready(async () => {
     $startBtn.click(() => {
         $startScreen.removeClass("show");
         // 仅修改：点阵示意图上下空行（margin: 5px auto），其余内容完全保留最初版本
-        showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3><br>
+        showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3>
             <p>你将看到两个点阵，其中一个点阵中有一部分点会规律水平运动（向左/向右），</p>
             <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有规律运动。在每一轮里，你需要完成两次判断。</p><br>
             <!-- 仅修改图片margin，减少上下空行 -->
@@ -417,9 +417,8 @@ $(document).ready(async () => {
             <p>左侧代表点有规律的运动，右侧代表点无规律的运动。</p><br>
             <p style="background-color: yellow; color: black; padding: 5px;"><strong>左侧有规律用右手食指按“V”键，右侧有规律用右手中指按“B”键</strong></p><br>
             <p>每次判断后，请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
-            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心</p>
-            <p>3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p><br>
-            <p>如果你理解了以上规则，请你将手指放到键盘对应的位置上</p><br>
+            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p><br>
+            <p>如果你理解了以上规则，请你将手指放到键盘对应的位置上</p>
             <p><strong>请按空格键继续</strong></p>`, (e) => {
             if (e.code === 'Space') {
                 hideTextPanel();
@@ -428,3 +427,4 @@ $(document).ready(async () => {
         });
     });
 });
+
