@@ -1,197 +1,147 @@
-/* 全局样式重置 */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Microsoft Yahei", Arial, sans-serif;
+    font-family: "Arial", sans-serif;
 }
-
 body {
-    background-color: #000;
-    color: #fff;
-    overflow: hidden; /* 隐藏页面滚动条 */
+    background-color: #f0f0f0;
+    overflow: hidden;
 }
 
-/* 被试信息页面 */
+/* 被试信息输入页 */
 #info-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
+    background-color: #ccc;
     display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
-    padding: 20px;
+    align-items: center;
+    z-index: 110;
+    text-align: center;
 }
-
-#info-screen h2 {
-    font-size: 28px;
-    margin-bottom: 30px;
+.info-item {
+    margin: 15px 0;
+    width: 300px;
 }
-
-.info-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 350px;
-}
-
-.info-form label {
-    font-size: 20px;
-}
-
-.info-form input {
-    padding: 10px;
+.info-item label {
+    display: block;
     font-size: 18px;
-    border: 2px solid #666;
-    border-radius: 5px;
-    background-color: #222;
-    color: #fff;
+    margin-bottom: 5px;
 }
-
-.error-tip {
-    color: #ff4444;
+.info-item input {
+    width: 100%;
+    height: 40px;
+    padding: 0 10px;
+    font-size: 16px;
+    border: 1px solid #999;
+    border-radius: 4px;
+}
+.info-item .error {
+    color: red;
     font-size: 14px;
+    margin-bottom: 5px;
     display: none;
-    margin-top: 5px;
 }
-
 #submit-info {
-    padding: 12px;
-    font-size: 20px;
-    background-color: #2196F3;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-#submit-info:hover {
-    background-color: #1976D2;
-}
-
-/* 开始页面 */
-#start-screen {
-    width: 100vw;
-    height: 100vh;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-#start-screen.show {
-    display: flex;
-}
-
-#start-screen h2 {
-    font-size: 32px;
-    margin-bottom: 40px;
-}
-
-#start-btn {
-    padding: 15px 40px;
-    font-size: 24px;
+    width: 200px;
+    height: 60px;
     background-color: #4CAF50;
-    color: #fff;
+    color: white;
+    font-size: 20px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+}
+#submit-info:hover {
+    background-color: #45a049;
 }
 
-#start-btn:hover {
-    background-color: #388E3C;
-}
-
-/* 实验容器（画布） */
-#exp-container {
+/* 开始界面 */
+#start-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
-    display: none;
-    align-items: center;
+    background-color: #ccc;
+    display: flex;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
+    z-index: 100;
+    text-align: center;
+    visibility: hidden;
+    opacity: 0;
+}
+#start-screen.show {
+    visibility: visible;
+    opacity: 1;
+}
+#start-screen h1 {
+    margin-bottom: 30px;
+    font-size: 36px;
+}
+#start-btn {
+    width: 200px;
+    height: 80px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+#start-btn:hover {
+    background-color: #45a049;
 }
 
-#exp-canvas {
+/* 实验画布：全屏但等比缩放，不拉伸（核心修复） */
+#exp-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background-color: #000;
-    display: block;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+#exp-canvas {
+    width: 1024px;
+    height: 768px;
+    /* 固定原始尺寸，通过容器居中，不拉伸 */
+    object-fit: contain;
 }
 
-/* 文本面板（指导语/判断/评分）- 核心优化 */
+/* 文本面板：全屏+文字居中 */
 #text-panel {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.95);
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.8);
+    color: white;
+    font-size: 20px;
     display: none;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
-    z-index: 1000;
-    padding: 10px 0; /* 大幅减少上下内边距 */
-    box-sizing: border-box;
-}
-
-#panel-content {
-    max-width: 90%;
-    max-height: 95vh; /* 限制最大高度，适配全屏 */
-    overflow-y: auto; /* 内容过多时滚动，不溢出 */
-    color: #fff;
-    font-size: 18px;
-    line-height: 1.35; /* 紧凑行高，减少上下空格 */
+    align-items: center;
+    padding: 40px;
+    border-radius: 0;
+    z-index: 90;
     text-align: center;
-    padding: 0 10px;
 }
 
-/* 欢迎页/提示页样式优化 */
-#panel-content h3 {
-    margin: 8px 0; /* 减少标题上下间距 */
-    font-size: 24px;
-}
-
-#panel-content p {
-    margin: 6px 0; /* 减少段落上下间距 */
-}
-
-#panel-content div {
-    margin: 8px 0; /* 信心评分区域间距优化 */
-}
-
-#panel-content img {
-    max-width: 50%; /* 缩小图片，节省垂直空间 */
-    height: auto;
-    margin: 8px auto;
-    display: block;
-    border: 1px solid #444;
-}
-
-/* 滚动条样式优化（仅在内容过多时显示） */
-#panel-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-#panel-content::-webkit-scrollbar-track {
-    background: #333;
-}
-
-#panel-content::-webkit-scrollbar-thumb {
-    background: #666;
-    border-radius: 4px;
-}
-
-/* 响应式适配（小屏幕/平板） */
-@media (max-width: 768px) {
-    #panel-content {
-        font-size: 16px;
-        line-height: 1.3;
-    }
-    
-    #panel-content h3 {
-        font-size: 20px;
-    }
-    
-    #panel-content img {
-        max-width: 70%;
-    }
+.hidden {
+    display: none !important;
 }
