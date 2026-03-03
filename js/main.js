@@ -416,7 +416,7 @@ $(document).ready(async () => {
     $startBtn.click(() => {
         $startScreen.removeClass("show");
         // 修改：1. 修复图片路径 2. 信心评分横向排版 3. 优化样式
-        showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3><br>
+        showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3>
             <p>你将看到两个点阵，其中一个点阵中有一部分点会规律水平运动（向左/向右），</p>
             <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有规律运动。在每一轮里，你需要完成两次判断。</p><br>
             <!-- 点阵示意图：修复路径+优化样式 -->
@@ -432,7 +432,7 @@ $(document).ready(async () => {
                 <span>3：🙂 比较有信心</span>
                 <span>4：😃 非常有信心</span>
             </div><br>
-            <p>如果你理解了以上规则，请你将手指放到键盘对应的位置上</p><br>
+            <p>如果你理解了以上规则，请你将手指放到键盘对应的位置上</p>
             <p><strong>请按空格键继续</strong></p>`, (e) => {
             if (e.code === 'Space') {
                 hideTextPanel();
@@ -441,3 +441,4 @@ $(document).ready(async () => {
         });
     });
 });
+
