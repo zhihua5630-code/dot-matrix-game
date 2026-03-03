@@ -261,11 +261,10 @@ async function runSingleTrial() {
     // 显示第一次信心评分，并记录开始时间
     const confStartTime1 = Date.now();
     await new Promise(resolve => {
-        // 修改：小学生版信心评分（带表情+左手食指提示）
+        // 修改：信心评分排成一行
         showTextPanel(`<h3>信心评分</h3>
             <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
-            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心</p>
-            <p>3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
+            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
             let confKey = e.key.toUpperCase();
             if (EXP_CONFIG.keys.confidence.includes(confKey)) {
                 hideTextPanel();
@@ -314,11 +313,10 @@ async function runSingleTrial() {
     // 显示第二次信心评分，并记录开始时间
     const confStartTime2 = Date.now();
     await new Promise(resolve => {
-        // 修改：小学生版信心评分（带表情+左手食指提示）
+        // 修改：信心评分排成一行
         showTextPanel(`<h3>信心评分</h3>
             <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
-            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心</p>
-            <p>3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
+            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
             let confKey2 = e.key.toUpperCase();
             if (EXP_CONFIG.keys.confidence.includes(confKey2)) {
                 hideTextPanel();
@@ -427,4 +425,3 @@ $(document).ready(async () => {
         });
     });
 });
-
