@@ -261,11 +261,15 @@ async function runSingleTrial() {
     // 显示第一次信心评分，并记录开始时间
     const confStartTime1 = Date.now();
     await new Promise(resolve => {
-        // 修改：小学生版信心评分（带表情+左手食指提示）
+        // 修改：信心评分横向排版（一行显示）
         showTextPanel(`<h3>信心评分</h3>
             <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
-            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心</p>
-            <p>3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
+            <div style="display: flex; justify-content: center; gap: 20px; font-size: 18px; margin: 15px 0; flex-wrap: wrap;">
+                <span>1：😭 完全没信心</span>
+                <span>2：🙁 不太有信心</span>
+                <span>3：🙂 比较有信心</span>
+                <span>4：😃 非常有信心</span>
+            </div>`, async (e) => {
             let confKey = e.key.toUpperCase();
             if (EXP_CONFIG.keys.confidence.includes(confKey)) {
                 hideTextPanel();
@@ -314,11 +318,15 @@ async function runSingleTrial() {
     // 显示第二次信心评分，并记录开始时间
     const confStartTime2 = Date.now();
     await new Promise(resolve => {
-        // 修改：小学生版信心评分（带表情+左手食指提示）
+        // 修改：信心评分横向排版（一行显示）
         showTextPanel(`<h3>信心评分</h3>
             <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
-            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心</p>
-            <p>3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
+            <div style="display: flex; justify-content: center; gap: 20px; font-size: 18px; margin: 15px 0; flex-wrap: wrap;">
+                <span>1：😭 完全没信心</span>
+                <span>2：🙁 不太有信心</span>
+                <span>3：🙂 比较有信心</span>
+                <span>4：😃 非常有信心</span>
+            </div>`, async (e) => {
             let confKey2 = e.key.toUpperCase();
             if (EXP_CONFIG.keys.confidence.includes(confKey2)) {
                 hideTextPanel();
@@ -407,18 +415,23 @@ $(document).ready(async () => {
     // 开始游戏按钮点击事件
     $startBtn.click(() => {
         $startScreen.removeClass("show");
-        // 修改：完整的欢迎指导语（含点阵示意图+两次判断提醒+VB键+表情评分）
+        // 修改：1. 修复图片路径 2. 信心评分横向排版 3. 优化样式
         showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3><br>
             <p>你将看到两个点阵，其中一个点阵中有一部分点会规律水平运动（向左/向右），</p>
             <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有规律运动。在每一轮里，你需要完成两次判断。</p><br>
-            <!-- 点阵示意图 -->
-            <img src="./image/dot-example.png" alt="点阵示意图" style="max-width: 80%; height: auto; margin: 10px auto; display: block;"><br>
+            <!-- 点阵示意图：修复路径+优化样式 -->
+            <img src="./image/dot-example.png" alt="点阵示意图" style="max-width: 60%; height: auto; margin: 15px auto; display: block; border: 1px solid #444;"><br>
             <p>箭头代表点的运动方向（正式实验中没有箭头提示）。</p>
             <p>左侧代表点有规律的运动，右侧代表点无规律的运动。</p><br>
-            <p style="background-color: yellow; color: black; padding: 5px;"><strong>左侧有规律用右手食指按“V”键，右侧有规律用右手中指按“B”键</strong></p><br>
+            <p style="background-color: yellow; color: black; padding: 8px; font-size: 18px;"><strong>左侧有规律用右手食指按“V”键，右侧有规律用右手中指按“B”键</strong></p><br>
             <p>每次判断后，请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
-            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心</p>
-            <p>3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p><br>
+            <!-- 信心评分横向排版 -->
+            <div style="display: flex; justify-content: center; gap: 20px; font-size: 18px; margin: 15px 0; flex-wrap: wrap;">
+                <span>1：😭 完全没信心</span>
+                <span>2：🙁 不太有信心</span>
+                <span>3：🙂 比较有信心</span>
+                <span>4：😃 非常有信心</span>
+            </div><br>
             <p>如果你理解了以上规则，请你将手指放到键盘对应的位置上</p><br>
             <p><strong>请按空格键继续</strong></p>`, (e) => {
             if (e.code === 'Space') {
@@ -428,6 +441,3 @@ $(document).ready(async () => {
         });
     });
 });
-
-
-
