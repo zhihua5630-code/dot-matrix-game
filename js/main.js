@@ -2,43 +2,55 @@
 const EXP_CONFIG = {
     subjectName: "",
     subjectId: "",
-    trialCount: 12,
-    fixPointTime1: 1500,    // 第一次红色注视点时长（1500ms）
-    fixPointTime2: 500,     // 第二次白色注视点时长（500ms）
-    blankScreenTime: 100,   // 空屏时长（100ms）
-    videoPlayTime: 2500,    // 视频播放时长（2500ms）
+    // 练习：c30 共4个
+    practiceTrialCount: 4,
+    // 正式：每轮 12个视频×5遍 = 60个试次
+    formalTrialsPerRound: 60,
+    fixPointTime1: 1500,
+    fixPointTime2: 500,
+    blankScreenTime: 100,
+    videoPlayTime: 2500,
     responseTimeout: 10000,
-    stimuli: [
-        { name: "c20LL", correctKey: "V", url: "./videos/c20LL.mp4" },  // F→V
-        { name: "c20LR", correctKey: "V", url: "./videos/c20LR.mp4" },  // J→B
-        { name: "c20RL", correctKey: "B", url: "./videos/c20RL.mp4" },  // F→V
-        { name: "c20RR", correctKey: "B", url: "./videos/c20RR.mp4" },  // J→B
-        { name: "c30LL", correctKey: "V", url: "./videos/c30LL.mp4" },  // F→V
-        { name: "c30LR", correctKey: "V", url: "./videos/c30LR.mp4" },  // J→B
-        { name: "c30RL", correctKey: "B", url: "./videos/c30RL.mp4" },  // F→V
-        { name: "c30RR", correctKey: "B", url: "./videos/c30RR.mp4" },  // J→B
-        { name: "c40LL", correctKey: "V", url: "./videos/c40LL.mp4" },  // F→V
-        { name: "c40LR", correctKey: "V", url: "./videos/c40LR.mp4" },  // J→B
-        { name: "c40RL", correctKey: "B", url: "./videos/c40RL.mp4" },  // F→V
-        { name: "c40RR", correctKey: "B", url: "./videos/c40RR.mp4" },  // J→B
-        //{ name: "c80LL", correctKey: "V", url: "./videos/c80LL.mp4" },  // F→V
-       // { name: "c80LR", correctKey: "B", url: "./videos/c80LR.mp4" },  // J→B
-       // { name: "c80RL", correctKey: "V", url: "./videos/c80RL.mp4" },  // F→V
-       // { name: "c80RR", correctKey: "B", url: "./videos/c80RR.mp4" },  // J→B
+
+    // 练习刺激：只 c30
+    practiceStimuli: [
+        { name: "c30LL", correctKey: "V", url: "./videos/c30LL.mp4" },
+        { name: "c30LR", correctKey: "V", url: "./videos/c30LR.mp4" },
+        { name: "c30RL", correctKey: "B", url: "./videos/c30RL.mp4" },
+        { name: "c30RR", correctKey: "B", url: "./videos/c30RR.mp4" },
     ],
-    keys: {
-        judge: ["V", "B"],  // F/J→V/B
-        confidence: ["1","2","3","4"]
-    },
-    expData: [],
+    // 正式刺激：12个
+    formalStimuli: [
+        { name: "c20LL", correctKey: "V", url: "./videos/c20LL.mp4" },
+        { name: "c20LR", correctKey: "V", url: "./videos/c20LR.mp4" },
+        { name: "c20RL", correctKey: "B", url: "./videos/c20RL.mp4" },
+        { name: "c20RR", correctKey: "B", url: "./videos/c20RR.mp4" },
+        { name: "c30LL", correctKey: "V", url: "./videos/c30LL.mp4" },
+        { name: "c30LR", correctKey: "V", url: "./videos/c30LR.mp4" },
+        { name: "c30RL", correctKey: "B", url: "./videos/c30RL.mp4" },
+        { name: "c30RR", correctKey: "B", url: "./videos/c30RR.mp4" },
+        { name: "c40LL", correctKey: "V", url: "./videos/c40LL.mp4" },
+        { name: "c40LR", correctKey: "V", url: "./videos/c40LR.mp4" },
+        { name: "c40RL", correctKey: "B", url: "./videos/c40RL.mp4" },
+        { name: "c40RR", correctKey: "B", url: "./videos/c40RR.mp4" },
+    ],
+
+    stage: "practice", // practice / formal1 / formal2
     currentTrial: 0,
     currentStimulus: null,
+
+    keys: {
+        judge: ["V", "B"],
+        confidence: ["1","2","3","4"]
+    },
+
+    expData: [],
     trialTemp: {
         stimName: "",
         correctKey: "",
         key1: "", rt1: 0, status1: "", conf1: "", rt_conf1: 0,
         key2: "", rt2: 0, status2: "", conf2: "", rt_conf2: 0,
-        completeTime: "" // 新增：试次完成实时时间
+        completeTime: ""
     }
 };
 
@@ -94,7 +106,6 @@ $subjectName.focus(() => $nameError.hide());
 $subjectId.focus(() => $idError.hide());
 
 // ===================== 核心函数 =====================
-// 1. 显示文本面板
 function showTextPanel(content, callback) {
     $panelContent.html(content);
     $textPanel.css("display", "flex");
@@ -103,46 +114,37 @@ function showTextPanel(content, callback) {
     });
 }
 
-// 2. 隐藏文本面板
 function hideTextPanel() {
     $textPanel.hide();
     $(document).off("keydown");
 }
 
-// 3. 绘制注视点（固定尺寸，不拉伸）
 function drawFixPoint(color = "#fff") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    // 水平线
     ctx.beginPath();
     ctx.moveTo(centerX - 20, centerY);
     ctx.lineTo(centerX + 20, centerY);
     ctx.stroke();
-    // 垂直线
     ctx.beginPath();
     ctx.moveTo(centerX, centerY - 20);
     ctx.lineTo(centerX, centerY + 20);
     ctx.stroke();
 }
 
-// 4. 清空画布（空屏用）
 function clearCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// 5. 等待函数（精准延迟）
 function wait(ms) {
     return new Promise(resolve => {
-        setTimeout(() => {
-            resolve();
-        }, ms);
+        setTimeout(resolve, ms);
     });
 }
 
-// 新增：获取格式化的实时时间（YYYY-MM-DD HH:mm:ss）
 function getFormattedTime() {
     const now = new Date();
     const year = now.getFullYear();
@@ -154,15 +156,14 @@ function getFormattedTime() {
     return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 }
 
-// 6. 播放视频刺激（等比显示，不拉伸）
+// 视频播放（修复速度变慢）
 function playStimulusVideo(url, duration) {
     return new Promise((resolve, reject) => {
-        if (!url || url === "undefined") {
-            alert("错误：未找到视频文件，请联系实验者！");
-            reject(new Error("视频URL未定义"));
+        if (!url) {
+            alert("错误：未找到视频文件");
+            reject();
             return;
         }
-
         const video = document.createElement("video");
         video.preload = "auto";
         video.playsInline = true;
@@ -171,275 +172,283 @@ function playStimulusVideo(url, duration) {
         video.height = canvas.height;
         video.muted = true;
         video.style.display = "none";
-        // ✅ 强制浏览器全速播放，不压慢速度
         video.playbackRate = 1.0;
 
         video.addEventListener("canplaythrough", function() {
             video.play().then(() => {
                 const drawFrame = () => {
                     if (!video.paused && !video.ended) {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        ctx.clearRect(0,0,canvas.width,canvas.height);
+                        ctx.drawImage(video,0,0,canvas.width,canvas.height);
                         requestAnimationFrame(drawFrame);
                     }
                 };
                 drawFrame();
-
                 setTimeout(() => {
                     video.pause();
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
                     document.body.removeChild(video);
                     resolve();
                 }, duration);
             }).catch(err => {
-                console.error("视频播放失败：", err);
-                alert("视频自动播放被阻止，请使用Chrome浏览器并刷新页面！");
+                alert("视频自动播放被阻止，请刷新");
                 reject(err);
             });
         });
-
-        video.addEventListener("error", function(err) {
-            console.error("视频加载失败详情：", err);
-            alert(`视频加载失败：${url}\n请确认网络正常并联系实验者！`);
-            reject(err);
+        video.addEventListener("error", () => {
+            alert("视频加载失败：" + url);
+            reject();
         });
-
         document.body.appendChild(video);
         video.load();
     });
 }
 
-// 7. 单个试次流程（完整：方向+信心评分反应时+实时完成时间）
+// ===================== 试次执行 =====================
 async function runSingleTrial() {
-    if (EXP_CONFIG.currentTrial >= EXP_CONFIG.trialCount) {
+    let maxTrial, stimuliList;
+    if (EXP_CONFIG.stage === "practice") {
+        maxTrial = EXP_CONFIG.practiceTrialCount;
+        stimuliList = EXP_CONFIG.practiceStimuli;
+    } else if (EXP_CONFIG.stage === "formal1" || EXP_CONFIG.stage === "formal2") {
+        maxTrial = EXP_CONFIG.formalTrialsPerRound;
+        stimuliList = EXP_CONFIG.formalStimuli;
+    } else {
         endExperiment();
         return;
     }
 
-  // 初始化时打乱刺激顺序（只执行一次）
-if (!EXP_CONFIG.shuffledStimuli) {
-    EXP_CONFIG.shuffledStimuli = [...EXP_CONFIG.stimuli];
-    // Fisher-Yates 洗牌算法（保证随机且不重复）
-    for (let i = EXP_CONFIG.shuffledStimuli.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [EXP_CONFIG.shuffledStimuli[i], EXP_CONFIG.shuffledStimuli[j]] = 
-        [EXP_CONFIG.shuffledStimuli[j], EXP_CONFIG.shuffledStimuli[i]];
+    if (EXP_CONFIG.currentTrial >= maxTrial) {
+        showStageResult();
+        return;
     }
-}
-// 按打乱后的顺序取当前试次的刺激（保证每个只出现一次）
-EXP_CONFIG.currentStimulus = EXP_CONFIG.shuffledStimuli[EXP_CONFIG.currentTrial];
-    
-EXP_CONFIG.trialTemp = {
-    stimName: EXP_CONFIG.currentStimulus.name,
-    correctKey: EXP_CONFIG.currentStimulus.correctKey,
-    key1: "", rt1: 0, status1: "", conf1: "", rt_conf1: 0,
-    key2: "", rt2: 0, status2: "", conf2: "", rt_conf2: 0,
-    completeTime: ""
-};
 
-    // ========== 第一次判断流程（精准时序） ==========
+    // 取刺激
+    if (EXP_CONFIG.stage === "practice") {
+        EXP_CONFIG.currentStimulus = stimuliList[EXP_CONFIG.currentTrial];
+    } else {
+        let key = "shuffled_" + EXP_CONFIG.stage;
+        if (!EXP_CONFIG[key]) {
+            let pool = [];
+            for (let i = 0; i < 5; i++) {
+                let s = [...stimuliList];
+                for (let j = s.length-1; j>0; j--) {
+                    let k = Math.floor(Math.random()*(j+1));
+                    [s[j],s[k]] = [s[k],s[j]];
+                }
+                pool = pool.concat(s);
+            }
+            EXP_CONFIG[key] = pool;
+        }
+        EXP_CONFIG.currentStimulus = EXP_CONFIG[key][EXP_CONFIG.currentTrial];
+    }
+
+    EXP_CONFIG.trialTemp = {
+        stimName: EXP_CONFIG.currentStimulus.name,
+        correctKey: EXP_CONFIG.currentStimulus.correctKey,
+        key1: "", rt1: 0, status1: "", conf1: "", rt_conf1: 0,
+        key2: "", rt2: 0, status2: "", conf2: "", rt_conf2: 0,
+        completeTime: getFormattedTime()
+    };
+
+    // ---------- 第一次流程 ----------
     $expContainer.css("display", "flex");
-    // 1. 红色注视点：1500ms
     drawFixPoint("#ff0000");
     await wait(EXP_CONFIG.fixPointTime1);
-    
-    // 2. 空屏：100ms
     clearCanvas();
     await wait(EXP_CONFIG.blankScreenTime);
-    
-    // 3. 视频播放：2500ms
     await playStimulusVideo(EXP_CONFIG.currentStimulus.url, EXP_CONFIG.videoPlayTime);
     $expContainer.hide();
 
-    // 显示第一次判断提示页，并记录开始时间
-    const judgeStartTime1 = Date.now();
+    const t1 = Date.now();
     await new Promise(resolve => {
-        // 修改：第一次判断标题+VB键提示
-        showTextPanel(`<h3>请做第一次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
-            let key = e.key.toUpperCase();
-            if (EXP_CONFIG.keys.judge.includes(key)) {
+        showTextPanel(`<h3>请做第一次判断</h3><p>V 左有规律　B 右有规律</p>`, e => {
+            const k = e.key.toUpperCase();
+            if (EXP_CONFIG.keys.judge.includes(k)) {
                 hideTextPanel();
-                // 计算方向判断反应时
-                let rt1 = Date.now() - judgeStartTime1;
-                let status1 = (key === EXP_CONFIG.trialTemp.correctKey) ? "CORRECT" : "INCORRECT";
-                EXP_CONFIG.trialTemp.key1 = key;
-                EXP_CONFIG.trialTemp.rt1 = rt1;
-                EXP_CONFIG.trialTemp.status1 = status1;
+                EXP_CONFIG.trialTemp.key1 = k;
+                EXP_CONFIG.trialTemp.rt1 = Date.now() - t1;
+                EXP_CONFIG.trialTemp.status1 = k === EXP_CONFIG.trialTemp.correctKey ? "CORRECT" : "INCORRECT";
                 resolve();
             }
         });
     });
 
-    // 显示第一次信心评分，并记录开始时间
-    const confStartTime1 = Date.now();
+    const c1 = Date.now();
     await new Promise(resolve => {
-        // 修改：信心评分排成一行
-        showTextPanel(`<h3>信心评分</h3>
-            <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
-            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
-            let confKey = e.key.toUpperCase();
-            if (EXP_CONFIG.keys.confidence.includes(confKey)) {
+        showTextPanel(`<h3>信心评分</h3><p>1 完全没信心　2 不太有信心　3 比较有信心　4 非常有信心</p>`, e => {
+            const k = e.key.toUpperCase();
+            if (EXP_CONFIG.keys.confidence.includes(k)) {
                 hideTextPanel();
-                // 计算信心评分反应时
-                let rt_conf1 = Date.now() - confStartTime1;
-                EXP_CONFIG.trialTemp.conf1 = confKey;
-                EXP_CONFIG.trialTemp.rt_conf1 = rt_conf1;
+                EXP_CONFIG.trialTemp.conf1 = k;
+                EXP_CONFIG.trialTemp.rt_conf1 = Date.now() - c1;
                 resolve();
             }
         });
     });
 
-    // ========== 第二次判断流程（精准时序） ==========
+    // ---------- 第二次流程 ----------
     $expContainer.css("display", "flex");
-    // 1. 白色注视点：500ms
-    drawFixPoint("#ffffff");
+    drawFixPoint("#fff");
     await wait(EXP_CONFIG.fixPointTime2);
-    
-    // 2. 空屏：100ms
     clearCanvas();
     await wait(EXP_CONFIG.blankScreenTime);
-    
-    // 3. 视频播放：2500ms
     await playStimulusVideo(EXP_CONFIG.currentStimulus.url, EXP_CONFIG.videoPlayTime);
     $expContainer.hide();
 
-    // 显示第二次判断提示页，并记录开始时间
-    const judgeStartTime2 = Date.now();
+    const t2 = Date.now();
     await new Promise(resolve => {
-        // 修改：第二次判断标题+VB键提示
-        showTextPanel(`<h3>请做第二次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
-            let key2 = e.key.toUpperCase();
-            if (EXP_CONFIG.keys.judge.includes(key2)) {
+        showTextPanel(`<h3>请做第二次判断</h3><p>V 左有规律　B 右有规律</p>`, e => {
+            const k = e.key.toUpperCase();
+            if (EXP_CONFIG.keys.judge.includes(k)) {
                 hideTextPanel();
-                // 计算第二次方向判断反应时
-                let rt2 = Date.now() - judgeStartTime2;
-                let status2 = (key2 === EXP_CONFIG.trialTemp.correctKey) ? "CORRECT" : "INCORRECT";
-                EXP_CONFIG.trialTemp.key2 = key2;
-                EXP_CONFIG.trialTemp.rt2 = rt2;
-                EXP_CONFIG.trialTemp.status2 = status2;
+                EXP_CONFIG.trialTemp.key2 = k;
+                EXP_CONFIG.trialTemp.rt2 = Date.now() - t2;
+                EXP_CONFIG.trialTemp.status2 = k === EXP_CONFIG.trialTemp.correctKey ? "CORRECT" : "INCORRECT";
                 resolve();
             }
         });
     });
 
-    // 显示第二次信心评分，并记录开始时间
-    const confStartTime2 = Date.now();
+    const c2 = Date.now();
     await new Promise(resolve => {
-        // 修改：信心评分排成一行
-        showTextPanel(`<h3>信心评分</h3>
-            <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
-            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
-            let confKey2 = e.key.toUpperCase();
-            if (EXP_CONFIG.keys.confidence.includes(confKey2)) {
+        showTextPanel(`<h3>信心评分</h3><p>1 完全没信心　2 不太有信心　3 比较有信心　4 非常有信心</p>`, e => {
+            const k = e.key.toUpperCase();
+            if (EXP_CONFIG.keys.confidence.includes(k)) {
                 hideTextPanel();
-                // 计算第二次信心评分反应时
-                let rt_conf2 = Date.now() - confStartTime2;
-                EXP_CONFIG.trialTemp.conf2 = confKey2;
-                EXP_CONFIG.trialTemp.rt_conf2 = rt_conf2;
-                
-                // 新增：记录当前试次完成的实时时间
-                EXP_CONFIG.trialTemp.completeTime = getFormattedTime();
+                EXP_CONFIG.trialTemp.conf2 = k;
+                EXP_CONFIG.trialTemp.rt_conf2 = Date.now() - c2;
                 resolve();
             }
         });
     });
 
-    // 保存当前试次数据（包含实时完成时间）
+    // 保存数据
     EXP_CONFIG.expData.push({
+        阶段: EXP_CONFIG.stage,
         被试姓名: EXP_CONFIG.subjectName,
         被试编号: EXP_CONFIG.subjectId,
-        试次: EXP_CONFIG.currentTrial + 1,
-        刺激名称: EXP_CONFIG.trialTemp.stimName,
-        正确按键: EXP_CONFIG.trialTemp.correctKey,
-        第一次判断按键: EXP_CONFIG.trialTemp.key1,
-        第一次判断反应时: EXP_CONFIG.trialTemp.rt1,
-        第一次判断结果: EXP_CONFIG.trialTemp.status1,
-        第一次信心评分: EXP_CONFIG.trialTemp.conf1,
-        第一次信心评分反应时: EXP_CONFIG.trialTemp.rt_conf1,
-        第二次判断按键: EXP_CONFIG.trialTemp.key2,
-        第二次判断反应时: EXP_CONFIG.trialTemp.rt2,
-        第二次判断结果: EXP_CONFIG.trialTemp.status2,
-        第二次信心评分: EXP_CONFIG.trialTemp.conf2,
-        第二次信心评分反应时: EXP_CONFIG.trialTemp.rt_conf2,
-        试次完成实时时间: EXP_CONFIG.trialTemp.completeTime // 新增列
+        试次: EXP_CONFIG.currentTrial+1,
+        刺激: EXP_CONFIG.trialTemp.stimName,
+        正确键: EXP_CONFIG.trialTemp.correctKey,
+        一按键: EXP_CONFIG.trialTemp.key1,
+        一反应时: EXP_CONFIG.trialTemp.rt1,
+        一结果: EXP_CONFIG.trialTemp.status1,
+        一信心: EXP_CONFIG.trialTemp.conf1,
+        一信时: EXP_CONFIG.trialTemp.rt_conf1,
+        二按键: EXP_CONFIG.trialTemp.key2,
+        二反应时: EXP_CONFIG.trialTemp.rt2,
+        二结果: EXP_CONFIG.trialTemp.status2,
+        二信心: EXP_CONFIG.trialTemp.conf2,
+        二信时: EXP_CONFIG.trialTemp.rt_conf2,
+        完成时间: EXP_CONFIG.trialTemp.completeTime
     });
 
-    // 进入下一试次
     EXP_CONFIG.currentTrial++;
     runSingleTrial();
 }
 
-// 8. 实验结束：导出数据
-function endExperiment() {
-    let correct1 = EXP_CONFIG.expData.filter(d => d.第一次判断结果 === "CORRECT").length;
-    let correct2 = EXP_CONFIG.expData.filter(d => d.第二次判断结果 === "CORRECT").length;
-    let acc1 = (correct1 / EXP_CONFIG.trialCount * 100).toFixed(1);
-    let acc2 = (correct2 / EXP_CONFIG.trialCount * 100).toFixed(1);
+// ===================== 阶段结果 & 流程控制 =====================
+function showStageResult() {
+    let dataInStage = EXP_CONFIG.expData.filter(d => d.阶段 === EXP_CONFIG.stage);
+    let correct = dataInStage.filter(d => d.一结果 === "CORRECT").length;
+    let total = dataInStage.length;
+    let acc = (correct / total * 100).toFixed(1);
 
-    showTextPanel(`<h3>游戏完成！</h3>
-        <p>感谢你的参与！</p>
-        <p>第一次判断正确率：${acc1}%</p>
-        <p>第二次判断正确率：${acc2}%</p>
-        <p>按任意键导出数据并结束</p>`, () => {
-        exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_捕捉点阵游戏数据.csv`);
+    if (EXP_CONFIG.stage === "practice") {
+        if (acc >= 60) {
+            showTextPanel(`
+                <h3>练习结束</h3>
+                <p>第一次判断正确率：${acc}%</p>
+                <p>合格！按 <strong>Q</strong> 进入正式实验第一轮</p>
+            `, e => {
+                if (e.key.toUpperCase() === "Q") {
+                    hideTextPanel();
+                    EXP_CONFIG.stage = "formal1";
+                    EXP_CONFIG.currentTrial = 0;
+                    runSingleTrial();
+                }
+            });
+        } else {
+            showTextPanel(`
+                <h3>练习结束</h3>
+                <p>第一次判断正确率：${acc}%</p>
+                <p>未达标，请按 <strong>P</strong> 重新练习</p>
+            `, e => {
+                if (e.key.toUpperCase() === "P") {
+                    hideTextPanel();
+                    EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => d.阶段 !== "practice");
+                    EXP_CONFIG.currentTrial = 0;
+                    runSingleTrial();
+                }
+            });
+        }
+    } else if (EXP_CONFIG.stage === "formal1") {
+        showTextPanel(`
+            <h3>第一轮正式实验结束</h3>
+            <p>正确率：${acc}%</p>
+            <p>按 <strong>Q</strong> 进入第二轮</p>
+        `, e => {
+            if (e.key.toUpperCase() === "Q") {
+                hideTextPanel();
+                EXP_CONFIG.stage = "formal2";
+                EXP_CONFIG.currentTrial = 0;
+                runSingleTrial();
+            }
+        });
+    } else if (EXP_CONFIG.stage === "formal2") {
+        showTextPanel(`
+            <h3>全部实验结束！</h3>
+            <p>本轮正确率：${acc}%</p>
+            <p>按任意键导出数据</p>
+        `, () => {
+            hideTextPanel();
+            endExperiment();
+        });
+    }
+}
+
+// ===================== 实验结束 =====================
+function endExperiment() {
+    showTextPanel(`<h3>感谢参与！</h3><p>正在导出数据…</p>`, () => {
+        exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_点阵数据.csv`);
         $expContainer.hide();
         hideTextPanel();
     });
 }
 
-// 9. CSV导出工具函数
 function exportCSV(data, filename) {
     const headers = Object.keys(data[0]).join(",");
     const rows = data.map(d => Object.values(d).join(",")).join("\n");
-    const csvContent = `${headers}\n${rows}`;
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const csv = headers + "\n" + rows;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    link.style.display = "none";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
     URL.revokeObjectURL(url);
 }
 
-// ===================== 实验初始化 =====================
+// ===================== 启动 =====================
 $(document).ready(async () => {
-    // 预加载第一个视频
     const testVideo = document.createElement("video");
     testVideo.muted = true;
-    testVideo.src = EXP_CONFIG.stimuli[0].url;
-    testVideo.play().then(() => testVideo.pause()).catch(() => {
-        alert("提示：浏览器正在初始化播放权限，点击“确定”继续即可！");
-    });
+    testVideo.src = EXP_CONFIG.practiceStimuli[0].url;
+    testVideo.play().then(()=>testVideo.pause()).catch(()=>{});
 
-    // 开始游戏按钮点击事件
     $startBtn.click(() => {
         $startScreen.removeClass("show");
-        // 仅修改：点阵示意图上下空行（margin: 5px auto），其余内容完全保留最初版本
-        showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3>
-            <p>你将看到两个点阵，其中一个点阵中有一部分点会规律水平运动（向左/向右），</p>
-            <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有规律运动。在每一轮里，你需要完成两次判断。</p><br>
-            <!-- 仅修改图片margin，减少上下空行 -->
-            <img src="./image/dot-example.png" alt="点阵示意图" style="max-width: 80%; height: auto; margin: 5px auto; display: block;"><br>
-            <p>箭头代表点的运动方向（正式实验中没有箭头提示）。</p>
-            <p>左侧代表点有规律的运动，右侧代表点无规律的运动。</p><br>
-            <p style="background-color: yellow; color: black; padding: 5px;"><strong>左侧有规律用右手食指按“V”键，右侧有规律用右手中指按“B”键</strong></p><br>
-            <p>每次判断后，请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
-            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p><br>
-            <p>如果你理解了以上规则，请你将手指放到键盘对应的位置上</p>
-            <p><strong>请按空格键继续</strong></p>`, (e) => {
-            if (e.code === 'Space') {
+        showTextPanel(`
+            <h3>欢迎参加实验</h3>
+            <p>请判断：左边有规律按 V，右边有规律按 B</p>
+            <p>每次判断后进行1‑4信心评分</p>
+            <p>按<strong>空格键</strong>开始练习</p>
+        `, e => {
+            if (e.code === "Space") {
                 hideTextPanel();
                 runSingleTrial();
             }
         });
     });
 });
-
-
-
-
-
-
