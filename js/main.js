@@ -235,7 +235,7 @@ function playStimulusVideo(url, duration) {
     });
 }
 
-// 新增：阶段结果展示函数（修复Q/P键无响应问题）
+// 新增：阶段结果展示函数
 function showStageResult() {
     let dataInStage = EXP_CONFIG.expData.filter(d => {
         if (EXP_CONFIG.stage === "practice") {
@@ -268,39 +268,38 @@ function showStageResult() {
     }
 
     showTextPanel(content, async (e) => {
-        // ✅ 核心修复：同时兼容 e.key 和 e.code，确保Q/P键100%识别
-        let key = e.key.toUpperCase();
-        let code = e.code.toUpperCase();
-        
-        if (EXP_CONFIG.stage === "practice") {
-            // 练习阶段：Q进正式 / P重练
-            if (acc1 >= 60 && (key === "Q" || code === "KEYQ")) {
+        // 🔥 超级简单粗暴：只要按的是 Q 就进下一轮
+        if (e.key.toLowerCase() === 'q') {
+            if (EXP_CONFIG.stage === "practice") {
                 EXP_CONFIG.stage = "formal1";
                 EXP_CONFIG.currentTrial = 0;
                 hideTextPanel();
                 runSingleTrial();
-            } else if (acc1 < 60 && (key === "P" || code === "KEYP")) {
-                EXP_CONFIG.currentTrial = 0;
-                EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => !d.刺激名称.includes("c30"));
-                hideTextPanel();
-                runSingleTrial();
-            }
-        } else if (EXP_CONFIG.stage === "formal1") {
-            // 正式第一轮：Q进第二轮
-            if (key === "Q" || code === "KEYQ") {
+            } else if (EXP_CONFIG.stage === "formal1") {
                 EXP_CONFIG.stage = "formal2";
                 EXP_CONFIG.currentTrial = 0;
                 hideTextPanel();
                 runSingleTrial();
             }
-        } else if (EXP_CONFIG.stage === "formal2") {
-            // 正式第二轮：任意键导出数据
+        }
+
+        // 按 P 重练
+        if (e.key.toLowerCase() === 'p') {
+            if (EXP_CONFIG.stage === "practice" && acc1 < 60) {
+                EXP_CONFIG.currentTrial = 0;
+                EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => !d.刺激名称.includes("c30"));
+                hideTextPanel();
+                runSingleTrial();
+            }
+        }
+
+        // 结束阶段任意键
+        if (EXP_CONFIG.stage === "formal2") {
             hideTextPanel();
             endExperiment();
         }
     });
 }
-
 // 7. 单个试次流程（完整：方向+信心评分反应时+实时完成时间）
 async function runSingleTrial() {
     // 判断当前阶段
@@ -554,3 +553,4 @@ $(document).ready(async () => {
         });
     });
 });
+
