@@ -9,18 +9,18 @@ const EXP_CONFIG = {
     videoPlayTime: 2500,    // 视频播放时长（2500ms）
     responseTimeout: 10000,
     stimuli: [
-        { name: "c50LL", correctKey: "V", url: "./videos/c50LL.mp4" },  // F→V
-        { name: "c50LR", correctKey: "B", url: "./videos/c50LR.mp4" },  // J→B
-        { name: "c50RL", correctKey: "V", url: "./videos/c50RL.mp4" },  // F→V
-        { name: "c50RR", correctKey: "B", url: "./videos/c50RR.mp4" },  // J→B
-        { name: "c60LL", correctKey: "V", url: "./videos/c60LL.mp4" },  // F→V
-        { name: "c60LR", correctKey: "B", url: "./videos/c60LR.mp4" },  // J→B
-        { name: "c60RL", correctKey: "V", url: "./videos/c60RL.mp4" },  // F→V
-        { name: "c60RR", correctKey: "B", url: "./videos/c60RR.mp4" },  // J→B
-        { name: "c70LL", correctKey: "V", url: "./videos/c70LL.mp4" },  // F→V
-        { name: "c70LR", correctKey: "B", url: "./videos/c70LR.mp4" },  // J→B
-        { name: "c70RL", correctKey: "V", url: "./videos/c70RL.mp4" },  // F→V
-        { name: "c70RR", correctKey: "B", url: "./videos/c70RR.mp4" },  // J→B
+        { name: "c20LL", correctKey: "V", url: "./videos/c20LL.mp4" },  // F→V
+        { name: "c20LR", correctKey: "V", url: "./videos/c20LR.mp4" },  // J→B
+        { name: "c20RL", correctKey: "B", url: "./videos/c20RL.mp4" },  // F→V
+        { name: "c20RR", correctKey: "B", url: "./videos/c20RR.mp4" },  // J→B
+        { name: "c30LL", correctKey: "V", url: "./videos/c30LL.mp4" },  // F→V
+        { name: "c30LR", correctKey: "V", url: "./videos/c30LR.mp4" },  // J→B
+        { name: "c30RL", correctKey: "B", url: "./videos/c30RL.mp4" },  // F→V
+        { name: "c30RR", correctKey: "B", url: "./videos/c30RR.mp4" },  // J→B
+        { name: "c40LL", correctKey: "V", url: "./videos/c40LL.mp4" },  // F→V
+        { name: "c40LR", correctKey: "V", url: "./videos/c40LR.mp4" },  // J→B
+        { name: "c40RL", correctKey: "B", url: "./videos/c40RL.mp4" },  // F→V
+        { name: "c40RR", correctKey: "B", url: "./videos/c40RR.mp4" },  // J→B
         { name: "c80LL", correctKey: "V", url: "./videos/c80LL.mp4" },  // F→V
         { name: "c80LR", correctKey: "B", url: "./videos/c80LR.mp4" },  // J→B
         { name: "c80RL", correctKey: "V", url: "./videos/c80RL.mp4" },  // F→V
@@ -425,3 +425,4 @@ $(document).ready(async () => {
         });
     });
 });
+
