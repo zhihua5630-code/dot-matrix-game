@@ -235,7 +235,7 @@ function playStimulusVideo(url, duration) {
     });
 }
 
-// 新增：阶段结果展示函数
+// 新增：阶段结果展示函数（修复Q/P键无响应问题）
 function showStageResult() {
     let dataInStage = EXP_CONFIG.expData.filter(d => {
         if (EXP_CONFIG.stage === "practice") {
@@ -268,25 +268,33 @@ function showStageResult() {
     }
 
     showTextPanel(content, async (e) => {
+        // ✅ 核心修复：同时兼容 e.key 和 e.code，确保Q/P键100%识别
         let key = e.key.toUpperCase();
+        let code = e.code.toUpperCase();
+        
         if (EXP_CONFIG.stage === "practice") {
-            if (acc1 >= 60 && key === "Q") {
+            // 练习阶段：Q进正式 / P重练
+            if (acc1 >= 60 && (key === "Q" || code === "KEYQ")) {
                 EXP_CONFIG.stage = "formal1";
                 EXP_CONFIG.currentTrial = 0;
                 hideTextPanel();
                 runSingleTrial();
-            } else if (acc1 < 60 && key === "P") {
+            } else if (acc1 < 60 && (key === "P" || code === "KEYP")) {
                 EXP_CONFIG.currentTrial = 0;
                 EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => !d.刺激名称.includes("c30"));
                 hideTextPanel();
                 runSingleTrial();
             }
-        } else if (EXP_CONFIG.stage === "formal1" && key === "Q") {
-            EXP_CONFIG.stage = "formal2";
-            EXP_CONFIG.currentTrial = 0;
-            hideTextPanel();
-            runSingleTrial();
+        } else if (EXP_CONFIG.stage === "formal1") {
+            // 正式第一轮：Q进第二轮
+            if (key === "Q" || code === "KEYQ") {
+                EXP_CONFIG.stage = "formal2";
+                EXP_CONFIG.currentTrial = 0;
+                hideTextPanel();
+                runSingleTrial();
+            }
         } else if (EXP_CONFIG.stage === "formal2") {
+            // 正式第二轮：任意键导出数据
             hideTextPanel();
             endExperiment();
         }
@@ -480,8 +488,10 @@ async function runSingleTrial() {
 function endExperiment() {
     let correct1 = EXP_CONFIG.expData.filter(d => d.第一次判断结果 === "CORRECT").length;
     let correct2 = EXP_CONFIG.expData.filter(d => d.第二次判断结果 === "CORRECT").length;
-    let acc1 = (correct1 / EXP_CONFIG.trialCount * 100).toFixed(1);
-    let acc2 = (correct2 / EXP_CONFIG.trialCount * 100).toFixed(1);
+    // 修复：计算正确率时用总试次数，而非固定12
+    let totalTrials = EXP_CONFIG.expData.length;
+    let acc1 = totalTrials > 0 ? (correct1 / totalTrials * 100).toFixed(1) : "0.0";
+    let acc2 = totalTrials > 0 ? (correct2 / totalTrials * 100).toFixed(1) : "0.0";
 
     showTextPanel(`<h3>游戏完成！</h3>
         <p>感谢你的参与！</p>
