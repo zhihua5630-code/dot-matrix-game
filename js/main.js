@@ -235,7 +235,11 @@ function playStimulusVideo(url, duration) {
     });
 }
 
-// 新增：阶段结果展示函数
+// 全局变量：记录当前是否处于阶段结果页面
+let isStageResultPage = false;
+let currentAccuracy = 0; // 记录当前阶段正确率
+
+// 新增：阶段结果展示函数（终极修复版）
 function showStageResult() {
     let dataInStage = EXP_CONFIG.expData.filter(d => {
         if (EXP_CONFIG.stage === "practice") {
@@ -246,43 +250,73 @@ function showStageResult() {
     });
     let correct1 = dataInStage.filter(d => d.第一次判断结果 === "CORRECT").length;
     let total = EXP_CONFIG.stage === "practice" ? EXP_CONFIG.practiceTrialCount : EXP_CONFIG.formalTrialsPerRound;
-    let acc1 = (correct1 / total * 100).toFixed(1);
+    currentAccuracy = (correct1 / total * 100).toFixed(1);
 
     let content = "";
     if (EXP_CONFIG.stage === "practice") {
         content = `<h3>练习阶段结束！</h3>
-            <p>第一次判断正确率：${acc1}%</p>`;
-        if (acc1 >= 60) {
+            <p>第一次判断正确率：${currentAccuracy}%</p>`;
+        if (currentAccuracy >= 60) {
             content += `<p>恭喜你达到合格标准！请按 <strong>Q</strong> 键进入正式实验第一轮</p>`;
         } else {
             content += `<p>正确率未达标，请按 <strong>P</strong> 键重新练习</p>`;
         }
     } else if (EXP_CONFIG.stage === "formal1") {
         content = `<h3>正式实验第一轮结束！</h3>
-            <p>第一次判断正确率：${acc1}%</p>
+            <p>第一次判断正确率：${currentAccuracy}%</p>
             <p>请按 <strong>Q</strong> 键进入第二轮</p>`;
     } else if (EXP_CONFIG.stage === "formal2") {
         content = `<h3>正式实验全部结束！</h3>
-            <p>第一次判断正确率：${acc1}%</p>
+            <p>第一次判断正确率：${currentAccuracy}%</p>
             <p>按任意键导出数据并结束任务</p>`;
     }
 
-    showTextPanel(content, async (e) => {
-        // 🔥 超级简单粗暴：只要按的是 Q 就进下一轮
-        if (e.key.toLowerCase() === 'q') {
-            if (EXP_CONFIG.stage === "practice") {
-                EXP_CONFIG.stage = "formal1";
-                EXP_CONFIG.currentTrial = 0;
-                hideTextPanel();
-                runSingleTrial();
-            } else if (EXP_CONFIG.stage === "formal1") {
-                EXP_CONFIG.stage = "formal2";
-                EXP_CONFIG.currentTrial = 0;
-                hideTextPanel();
-                runSingleTrial();
-            }
-        }
+    // 显示面板，不绑定事件
+    $panelContent.html(content);
+    $textPanel.css("display", "flex");
+    // 标记当前处于结果页
+    isStageResultPage = true;
+}
 
+// 全局按键监听（核心修复：绕过封装，直接监听）
+$(document).off("keydown").on("keydown", function(e) {
+    // 只有在结果页才处理Q/P键
+    if (!isStageResultPage) return;
+
+    let key = e.key.toLowerCase();
+    // 练习阶段
+    if (EXP_CONFIG.stage === "practice") {
+        if (key === "q" && currentAccuracy >= 60) {
+            isStageResultPage = false; // 重置状态
+            $textPanel.hide();
+            EXP_CONFIG.stage = "formal1";
+            EXP_CONFIG.currentTrial = 0;
+            runSingleTrial();
+        } else if (key === "p" && currentAccuracy < 60) {
+            isStageResultPage = false; // 重置状态
+            $textPanel.hide();
+            EXP_CONFIG.currentTrial = 0;
+            EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => !d.刺激名称.includes("c30"));
+            runSingleTrial();
+        }
+    } 
+    // 正式第一轮
+    else if (EXP_CONFIG.stage === "formal1") {
+        if (key === "q") {
+            isStageResultPage = false; // 重置状态
+            $textPanel.hide();
+            EXP_CONFIG.stage = "formal2";
+            EXP_CONFIG.currentTrial = 0;
+            runSingleTrial();
+        }
+    } 
+    // 正式第二轮（任意键）
+    else if (EXP_CONFIG.stage === "formal2") {
+        isStageResultPage = false; // 重置状态
+        $textPanel.hide();
+        endExperiment();
+    }
+});
         // 按 P 重练
         if (e.key.toLowerCase() === 'p') {
             if (EXP_CONFIG.stage === "practice" && acc1 < 60) {
@@ -553,4 +587,5 @@ $(document).ready(async () => {
         });
     });
 });
+
 
