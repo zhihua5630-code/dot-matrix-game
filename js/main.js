@@ -214,16 +214,26 @@ async function runSingleTrial() {
         return;
     }
 
-    // 随机选择刺激
-    const randomIdx = Math.floor(Math.random() * EXP_CONFIG.stimuli.length);
-    EXP_CONFIG.currentStimulus = EXP_CONFIG.stimuli[randomIdx];
-    EXP_CONFIG.trialTemp = {
-        stimName: EXP_CONFIG.currentStimulus.name,
-        correctKey: EXP_CONFIG.currentStimulus.correctKey,
-        key1: "", rt1: 0, status1: "", conf1: "", rt_conf1: 0,
-        key2: "", rt2: 0, status2: "", conf2: "", rt_conf2: 0,
-        completeTime: ""
-    };
+  // 初始化时打乱刺激顺序（只执行一次）
+if (!EXP_CONFIG.shuffledStimuli) {
+    EXP_CONFIG.shuffledStimuli = [...EXP_CONFIG.stimuli];
+    // Fisher-Yates 洗牌算法（保证随机且不重复）
+    for (let i = EXP_CONFIG.shuffledStimuli.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [EXP_CONFIG.shuffledStimuli[i], EXP_CONFIG.shuffledStimuli[j]] = 
+        [EXP_CONFIG.shuffledStimuli[j], EXP_CONFIG.shuffledStimuli[i]];
+    }
+}
+// 按打乱后的顺序取当前试次的刺激（保证每个只出现一次）
+EXP_CONFIG.currentStimulus = EXP_CONFIG.shuffledStimuli[EXP_CONFIG.currentTrial];
+    
+EXP_CONFIG.trialTemp = {
+    stimName: EXP_CONFIG.currentStimulus.name,
+    correctKey: EXP_CONFIG.currentStimulus.correctKey,
+    key1: "", rt1: 0, status1: "", conf1: "", rt_conf1: 0,
+    key2: "", rt2: 0, status2: "", conf2: "", rt_conf2: 0,
+    completeTime: ""
+};
 
     // ========== 第一次判断流程（精准时序） ==========
     $expContainer.css("display", "flex");
@@ -425,6 +435,7 @@ $(document).ready(async () => {
         });
     });
 });
+
 
 
 
