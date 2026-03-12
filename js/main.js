@@ -228,16 +228,16 @@ function showStageResult() {
         content = `<h3>练习阶段结束！</h3>
             <p>第一次判断正确率：${acc1}%</p>`;
         if (acc1 >= 60) {
-            content += `<p>恭喜你达到合格标准！请按 <strong>Q</strong> 键进入正式实验第一轮</p>`;
+            content += `<p>恭喜你达到合格标准！请按 <strong>Q</strong> 键进入正式游戏第一轮</p>`;
         } else {
             content += `<p>正确率未达标，请按 <strong>P</strong> 键重新练习</p>`;
         }
     } else if (EXP_CONFIG.stage === "formal1") {
-        content = `<h3>正式实验第一轮结束！</h3>
+        content = `<h3>第一轮游戏结束！</h3>
             <p>第一次判断正确率：${acc1}%</p>
             <p>请按 <strong>Q</strong> 键进入第二轮</p>`;
     } else if (EXP_CONFIG.stage === "formal2") {
-        content = `<h3>正式实验全部结束！</h3>
+        content = `<h3>第二轮游戏结束！</h3>
             <p>第一次判断正确率：${acc1}%</p>
             <p>按任意键导出数据并结束任务</p>`;
     }
@@ -477,3 +477,4 @@ $(document).ready(async () => {
         });
     });
 });
+
