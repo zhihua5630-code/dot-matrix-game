@@ -120,13 +120,16 @@ $subjectName.focus(() => $nameError.hide());
 $subjectId.focus(() => $idError.hide());
 
 // ===================== 核心函数 =====================
-// 1. 显示文本面板
+// 1. 显示文本面板（简化版，只显示不绑定事件）
 function showTextPanel(content, callback) {
     $panelContent.html(content);
     $textPanel.css("display", "flex");
-    $(document).off("keydown").on("keydown", function(e) {
-        callback && callback(e);
-    });
+    // 仅处理非结果页的回调（如指导语、判断页）
+    if (callback && !isStageResultPage) {
+        $(document).off("keydown").on("keydown", function(e) {
+            callback && callback(e);
+        });
+    }
 }
 
 // 2. 隐藏文本面板
@@ -587,5 +590,6 @@ $(document).ready(async () => {
         });
     });
 });
+
 
 
