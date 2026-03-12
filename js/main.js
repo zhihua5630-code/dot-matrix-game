@@ -21,10 +21,10 @@ const EXP_CONFIG = {
         { name: "c40LR", correctKey: "V", url: "./videos/c40LR.mp4" },  // J→B
         { name: "c40RL", correctKey: "B", url: "./videos/c40RL.mp4" },  // F→V
         { name: "c40RR", correctKey: "B", url: "./videos/c40RR.mp4" },  // J→B
-        { name: "c80LL", correctKey: "V", url: "./videos/c80LL.mp4" },  // F→V
-        { name: "c80LR", correctKey: "B", url: "./videos/c80LR.mp4" },  // J→B
-        { name: "c80RL", correctKey: "V", url: "./videos/c80RL.mp4" },  // F→V
-        { name: "c80RR", correctKey: "B", url: "./videos/c80RR.mp4" },  // J→B
+        //{ name: "c80LL", correctKey: "V", url: "./videos/c80LL.mp4" },  // F→V
+       // { name: "c80LR", correctKey: "B", url: "./videos/c80LR.mp4" },  // J→B
+       // { name: "c80RL", correctKey: "V", url: "./videos/c80RL.mp4" },  // F→V
+       // { name: "c80RR", correctKey: "B", url: "./videos/c80RR.mp4" },  // J→B
     ],
     keys: {
         judge: ["V", "B"],  // F/J→V/B
@@ -425,4 +425,5 @@ $(document).ready(async () => {
         });
     });
 });
+
 
