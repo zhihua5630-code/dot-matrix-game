@@ -171,6 +171,8 @@ function playStimulusVideo(url, duration) {
         video.height = canvas.height;
         video.muted = true;
         video.style.display = "none";
+        // ✅ 强制浏览器全速播放，不压慢速度
+        video.playbackRate = 1.0;
 
         video.addEventListener("canplaythrough", function() {
             video.play().then(() => {
@@ -435,6 +437,7 @@ $(document).ready(async () => {
         });
     });
 });
+
 
 
 
