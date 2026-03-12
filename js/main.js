@@ -212,7 +212,7 @@ function playStimulusVideo(url, duration) {
     });
 }
 
-// ===================== 阶段结果展示（仅修复Q/P键） =====================
+// ===================== 阶段结果展示（修复Q键，保留P键逻辑） =====================
 function showStageResult() {
     let dataInStage = EXP_CONFIG.expData.filter(d => {
         if (EXP_CONFIG.stage === "practice") {
@@ -249,22 +249,28 @@ function showStageResult() {
     $textPanel.css("display", "flex");
     // 绑定带命名空间的Q/P键监听，避免被其他逻辑清空
     $(document).off("keydown.qp-key").on("keydown.qp-key", function(e) {
-        let key = e.key.toUpperCase();
+        // 修复：获取物理键码+兼容大小写
+        const keyCode = e.keyCode || e.which;
+        const key = e.key.toUpperCase();
+        
         if (EXP_CONFIG.stage === "practice") {
-            if (acc1 >= 60 && key === "Q") {
+            // Q键：兼容物理键码(81) + 大小写(Q/q)
+            if (acc1 >= 60 && (keyCode === 81 || key === "Q")) {
                 EXP_CONFIG.stage = "formal1";
                 EXP_CONFIG.currentTrial = 0;
                 $textPanel.hide();
                 $(document).off("keydown.qp-key");
                 runSingleTrial();
             } else if (acc1 < 60 && key === "P") {
+                // P键保留原有逻辑
                 EXP_CONFIG.currentTrial = 0;
                 EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => !d.刺激名称.includes("c30"));
                 $textPanel.hide();
                 $(document).off("keydown.qp-key");
                 runSingleTrial();
             }
-        } else if (EXP_CONFIG.stage === "formal1" && key === "Q") {
+        } else if (EXP_CONFIG.stage === "formal1" && (keyCode === 81 || key === "Q")) {
+            // 正式第一轮Q键：兼容物理键码+大小写
             EXP_CONFIG.stage = "formal2";
             EXP_CONFIG.currentTrial = 0;
             $textPanel.hide();
