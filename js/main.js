@@ -117,7 +117,8 @@ function showTextPanel(content, callback) {
     $panelContent.html(content);
     $textPanel.css("display", "flex");
     if (callback) {
-        $(document).off("keydown").on("keydown", function(e) {
+        // 仅添加non-qp命名空间，避免清空Q/P键监听
+        $(document).off("keydown.non-qp").on("keydown.non-qp", function(e) {
             callback(e);
         });
     }
@@ -125,7 +126,8 @@ function showTextPanel(content, callback) {
 
 function hideTextPanel() {
     $textPanel.hide();
-    $(document).off("keydown");
+    // 仅解绑non-qp命名空间，保留Q/P键监听
+    $(document).off("keydown.non-qp");
 }
 
 function drawFixPoint(color = "#fff") {
@@ -210,7 +212,7 @@ function playStimulusVideo(url, duration) {
     });
 }
 
-// ===================== 阶段结果展示（修复Q/P键） =====================
+// ===================== 阶段结果展示（仅修复Q/P键） =====================
 function showStageResult() {
     let dataInStage = EXP_CONFIG.expData.filter(d => {
         if (EXP_CONFIG.stage === "practice") {
@@ -242,27 +244,35 @@ function showStageResult() {
             <p>按任意键导出数据并结束任务</p>`;
     }
 
-    showTextPanel(content, (e) => {
+    // 直接渲染结果页，单独绑定Q/P键监听（核心修复）
+    $panelContent.html(content);
+    $textPanel.css("display", "flex");
+    // 绑定带命名空间的Q/P键监听，避免被其他逻辑清空
+    $(document).off("keydown.qp-key").on("keydown.qp-key", function(e) {
         let key = e.key.toUpperCase();
         if (EXP_CONFIG.stage === "practice") {
             if (acc1 >= 60 && key === "Q") {
                 EXP_CONFIG.stage = "formal1";
                 EXP_CONFIG.currentTrial = 0;
-                hideTextPanel();
+                $textPanel.hide();
+                $(document).off("keydown.qp-key");
                 runSingleTrial();
             } else if (acc1 < 60 && key === "P") {
                 EXP_CONFIG.currentTrial = 0;
                 EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => !d.刺激名称.includes("c30"));
-                hideTextPanel();
+                $textPanel.hide();
+                $(document).off("keydown.qp-key");
                 runSingleTrial();
             }
         } else if (EXP_CONFIG.stage === "formal1" && key === "Q") {
             EXP_CONFIG.stage = "formal2";
             EXP_CONFIG.currentTrial = 0;
-            hideTextPanel();
+            $textPanel.hide();
+            $(document).off("keydown.qp-key");
             runSingleTrial();
         } else if (EXP_CONFIG.stage === "formal2") {
-            hideTextPanel();
+            $textPanel.hide();
+            $(document).off("keydown.qp-key");
             endExperiment();
         }
     });
@@ -477,4 +487,3 @@ $(document).ready(async () => {
         });
     });
 });
-
