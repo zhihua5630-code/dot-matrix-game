@@ -2,7 +2,7 @@
 const EXP_CONFIG = {
     subjectName: "",
     subjectId: "",
-    trialCount: 16,
+    trialCount: 12,
     fixPointTime1: 1500,    // 第一次红色注视点时长（1500ms）
     fixPointTime2: 500,     // 第二次白色注视点时长（500ms）
     blankScreenTime: 100,   // 空屏时长（100ms）
@@ -425,6 +425,7 @@ $(document).ready(async () => {
         });
     });
 });
+
 
 
 
