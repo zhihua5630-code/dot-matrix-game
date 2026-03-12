@@ -117,7 +117,7 @@ function showTextPanel(content, callback) {
     $panelContent.html(content);
     $textPanel.css("display", "flex");
     if (callback) {
-        // 仅添加non-qp命名空间，避免清空Q/P键监听
+        // 仅添加non-qp命名空间，避免清空O/P键监听
         $(document).off("keydown.non-qp").on("keydown.non-qp", function(e) {
             callback(e);
         });
@@ -126,7 +126,7 @@ function showTextPanel(content, callback) {
 
 function hideTextPanel() {
     $textPanel.hide();
-    // 仅解绑non-qp命名空间，保留Q/P键监听
+    // 仅解绑non-qp命名空间，保留O/P键监听
     $(document).off("keydown.non-qp");
 }
 
@@ -212,7 +212,7 @@ function playStimulusVideo(url, duration) {
     });
 }
 
-// ===================== 阶段结果展示（修复Q键，保留P键逻辑） =====================
+// ===================== 阶段结果展示（O键替换Q键 + 显示第二次正确率） =====================
 function showStageResult() {
     let dataInStage = EXP_CONFIG.expData.filter(d => {
         if (EXP_CONFIG.stage === "practice") {
@@ -221,64 +221,70 @@ function showStageResult() {
             return true;
         }
     });
+    // 计算第一次和第二次正确率
     let correct1 = dataInStage.filter(d => d.第一次判断结果 === "CORRECT").length;
+    let correct2 = dataInStage.filter(d => d.第二次判断结果 === "CORRECT").length;
     let total = EXP_CONFIG.stage === "practice" ? EXP_CONFIG.practiceTrialCount : EXP_CONFIG.formalTrialsPerRound;
     let acc1 = (correct1 / total * 100).toFixed(1);
+    let acc2 = (correct2 / total * 100).toFixed(1);
 
     let content = "";
     if (EXP_CONFIG.stage === "practice") {
         content = `<h3>练习阶段结束！</h3>
-            <p>第一次判断正确率：${acc1}%</p>`;
-        if (acc1 >= 60) {
-            content += `<p>恭喜你达到合格标准！请按 <strong>Q</strong> 键进入正式游戏第一轮</p>`;
+            <p>第一次判断正确率：${acc1}%</p>
+            <p>第二次判断正确率：${acc2}%</p>`; // 新增展示第二次正确率
+        if (acc1 >= 60) { // 仍按第一次正确率判断是否进入正式实验
+            content += `<p>恭喜你达到合格标准！请按 <strong>O</strong> 键进入正式游戏第一轮</p>`;
         } else {
             content += `<p>正确率未达标，请按 <strong>P</strong> 键重新练习</p>`;
         }
     } else if (EXP_CONFIG.stage === "formal1") {
         content = `<h3>第一轮游戏结束！</h3>
             <p>第一次判断正确率：${acc1}%</p>
-            <p>请按 <strong>Q</strong> 键进入第二轮</p>`;
+            <p>第二次判断正确率：${acc2}%</p>
+            <p>请按 <strong>O</strong> 键进入第二轮</p>`;
     } else if (EXP_CONFIG.stage === "formal2") {
         content = `<h3>第二轮游戏结束！</h3>
             <p>第一次判断正确率：${acc1}%</p>
+            <p>第二次判断正确率：${acc2}%</p>
             <p>按任意键导出数据并结束任务</p>`;
     }
 
-    // 直接渲染结果页，单独绑定Q/P键监听（核心修复）
+    // 直接渲染结果页，单独绑定O/P键监听
     $panelContent.html(content);
     $textPanel.css("display", "flex");
-    // 绑定带命名空间的Q/P键监听，避免被其他逻辑清空
-    $(document).off("keydown.qp-key").on("keydown.qp-key", function(e) {
-        // 修复：获取物理键码+兼容大小写
+    // 绑定带命名空间的O/P键监听，避免被其他逻辑清空
+    $(document).off("keydown.op-key").on("keydown.op-key", function(e) {
+        // 修复：获取物理键码+兼容大小写（O键物理码79）
         const keyCode = e.keyCode || e.which;
         const key = e.key.toUpperCase();
         
         if (EXP_CONFIG.stage === "practice") {
-            // Q键：兼容物理键码(81) + 大小写(Q/q)
-            if (acc1 >= 60 && (keyCode === 81 || key === "Q")) {
+            // O键：兼容物理键码(79) + 大小写(O/o)
+            if (acc1 >= 60 && (keyCode === 79 || key === "O")) {
                 EXP_CONFIG.stage = "formal1";
                 EXP_CONFIG.currentTrial = 0;
                 $textPanel.hide();
-                $(document).off("keydown.qp-key");
+                $(document).off("keydown.op-key");
                 runSingleTrial();
             } else if (acc1 < 60 && key === "P") {
                 // P键保留原有逻辑
                 EXP_CONFIG.currentTrial = 0;
                 EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => !d.刺激名称.includes("c30"));
                 $textPanel.hide();
-                $(document).off("keydown.qp-key");
+                $(document).off("keydown.op-key");
                 runSingleTrial();
             }
-        } else if (EXP_CONFIG.stage === "formal1" && (keyCode === 81 || key === "Q")) {
-            // 正式第一轮Q键：兼容物理键码+大小写
+        } else if (EXP_CONFIG.stage === "formal1" && (keyCode === 79 || key === "O")) {
+            // 正式第一轮O键：兼容物理键码+大小写
             EXP_CONFIG.stage = "formal2";
             EXP_CONFIG.currentTrial = 0;
             $textPanel.hide();
-            $(document).off("keydown.qp-key");
+            $(document).off("keydown.op-key");
             runSingleTrial();
         } else if (EXP_CONFIG.stage === "formal2") {
             $textPanel.hide();
-            $(document).off("keydown.qp-key");
+            $(document).off("keydown.op-key");
             endExperiment();
         }
     });
