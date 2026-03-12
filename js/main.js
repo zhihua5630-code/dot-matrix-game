@@ -87,6 +87,15 @@ const ctx = canvas.getContext("2d");
 canvas.width = 1024;
 canvas.height = 768;
 
+// ===================== 全局状态管理（解决按键冲突核心） =====================
+const KEY_STATE = {
+    isStageResult: false,    // 是否在阶段结果页
+    isInstruction: false,    // 是否在指导语页
+    isJudgePage: false,      // 是否在判断页
+    isConfidencePage: false, // 是否在信心评分页
+    currentAccuracy: 0       // 当前阶段正确率
+};
+
 // ===================== 被试信息验证 =====================
 $submitInfo.click(() => {
     let isValid = true;
@@ -120,22 +129,27 @@ $subjectName.focus(() => $nameError.hide());
 $subjectId.focus(() => $idError.hide());
 
 // ===================== 核心函数 =====================
-// 1. 显示文本面板（简化版，只显示不绑定事件）
-function showTextPanel(content, callback) {
+// 1. 显示文本面板（按页面类型管理按键）
+function showTextPanel(content, pageType = "default") {
+    // 重置所有页面状态
+    Object.keys(KEY_STATE).forEach(key => {
+        if (key.includes("is")) KEY_STATE[key] = false;
+    });
+    
+    // 设置当前页面状态
+    if (pageType === "instruction") KEY_STATE.isInstruction = true;
+    if (pageType === "judge") KEY_STATE.isJudgePage = true;
+    if (pageType === "confidence") KEY_STATE.isConfidencePage = true;
+    if (pageType === "stageResult") KEY_STATE.isStageResult = true;
+
+    // 显示面板内容
     $panelContent.html(content);
     $textPanel.css("display", "flex");
-    // 仅处理非结果页的回调（如指导语、判断页）
-    if (callback && !isStageResultPage) {
-        $(document).off("keydown").on("keydown", function(e) {
-            callback && callback(e);
-        });
-    }
 }
 
 // 2. 隐藏文本面板
 function hideTextPanel() {
     $textPanel.hide();
-    $(document).off("keydown");
 }
 
 // 3. 绘制注视点（固定尺寸，不拉伸）
@@ -238,11 +252,7 @@ function playStimulusVideo(url, duration) {
     });
 }
 
-// 全局变量：记录当前是否处于阶段结果页面
-let isStageResultPage = false;
-let currentAccuracy = 0; // 记录当前阶段正确率
-
-// 新增：阶段结果展示函数（终极修复版）
+// 7. 阶段结果展示函数（无内部按键逻辑，交给全局监听）
 function showStageResult() {
     let dataInStage = EXP_CONFIG.expData.filter(d => {
         if (EXP_CONFIG.stage === "practice") {
@@ -253,91 +263,32 @@ function showStageResult() {
     });
     let correct1 = dataInStage.filter(d => d.第一次判断结果 === "CORRECT").length;
     let total = EXP_CONFIG.stage === "practice" ? EXP_CONFIG.practiceTrialCount : EXP_CONFIG.formalTrialsPerRound;
-    currentAccuracy = (correct1 / total * 100).toFixed(1);
+    KEY_STATE.currentAccuracy = (correct1 / total * 100).toFixed(1);
 
     let content = "";
     if (EXP_CONFIG.stage === "practice") {
         content = `<h3>练习阶段结束！</h3>
-            <p>第一次判断正确率：${currentAccuracy}%</p>`;
-        if (currentAccuracy >= 60) {
+            <p>第一次判断正确率：${KEY_STATE.currentAccuracy}%</p>`;
+        if (KEY_STATE.currentAccuracy >= 60) {
             content += `<p>恭喜你达到合格标准！请按 <strong>Q</strong> 键进入正式实验第一轮</p>`;
         } else {
             content += `<p>正确率未达标，请按 <strong>P</strong> 键重新练习</p>`;
         }
     } else if (EXP_CONFIG.stage === "formal1") {
         content = `<h3>正式实验第一轮结束！</h3>
-            <p>第一次判断正确率：${currentAccuracy}%</p>
+            <p>第一次判断正确率：${KEY_STATE.currentAccuracy}%</p>
             <p>请按 <strong>Q</strong> 键进入第二轮</p>`;
     } else if (EXP_CONFIG.stage === "formal2") {
         content = `<h3>正式实验全部结束！</h3>
-            <p>第一次判断正确率：${currentAccuracy}%</p>
+            <p>第一次判断正确率：${KEY_STATE.currentAccuracy}%</p>
             <p>按任意键导出数据并结束任务</p>`;
     }
 
-    // 显示面板，不绑定事件
-    $panelContent.html(content);
-    $textPanel.css("display", "flex");
-    // 标记当前处于结果页
-    isStageResultPage = true;
+    // 标记为结果页，显示面板
+    showTextPanel(content, "stageResult");
 }
 
-// 全局按键监听（核心修复：绕过封装，直接监听）
-$(document).off("keydown").on("keydown", function(e) {
-    // 只有在结果页才处理Q/P键
-    if (!isStageResultPage) return;
-
-    let key = e.key.toLowerCase();
-    // 练习阶段
-    if (EXP_CONFIG.stage === "practice") {
-        if (key === "q" && currentAccuracy >= 60) {
-            isStageResultPage = false; // 重置状态
-            $textPanel.hide();
-            EXP_CONFIG.stage = "formal1";
-            EXP_CONFIG.currentTrial = 0;
-            runSingleTrial();
-        } else if (key === "p" && currentAccuracy < 60) {
-            isStageResultPage = false; // 重置状态
-            $textPanel.hide();
-            EXP_CONFIG.currentTrial = 0;
-            EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => !d.刺激名称.includes("c30"));
-            runSingleTrial();
-        }
-    } 
-    // 正式第一轮
-    else if (EXP_CONFIG.stage === "formal1") {
-        if (key === "q") {
-            isStageResultPage = false; // 重置状态
-            $textPanel.hide();
-            EXP_CONFIG.stage = "formal2";
-            EXP_CONFIG.currentTrial = 0;
-            runSingleTrial();
-        }
-    } 
-    // 正式第二轮（任意键）
-    else if (EXP_CONFIG.stage === "formal2") {
-        isStageResultPage = false; // 重置状态
-        $textPanel.hide();
-        endExperiment();
-    }
-});
-        // 按 P 重练
-        if (e.key.toLowerCase() === 'p') {
-            if (EXP_CONFIG.stage === "practice" && acc1 < 60) {
-                EXP_CONFIG.currentTrial = 0;
-                EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => !d.刺激名称.includes("c30"));
-                hideTextPanel();
-                runSingleTrial();
-            }
-        }
-
-        // 结束阶段任意键
-        if (EXP_CONFIG.stage === "formal2") {
-            hideTextPanel();
-            endExperiment();
-        }
-    });
-}
-// 7. 单个试次流程（完整：方向+信心评分反应时+实时完成时间）
+// 8. 单个试次流程（完整：方向+信心评分反应时+实时完成时间）
 async function runSingleTrial() {
     // 判断当前阶段
     let maxTrials, currentStimuli;
@@ -403,11 +354,15 @@ async function runSingleTrial() {
 
     // 显示第一次判断提示页，并记录开始时间
     const judgeStartTime1 = Date.now();
+    showTextPanel(`<h3>请做第一次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, "judge");
+    
+    // 等待判断按键（通过全局监听触发）
     await new Promise(resolve => {
-        // 修改：第一次判断标题+VB键提示
-        showTextPanel(`<h3>请做第一次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
+        const judgeHandler = (e) => {
             let key = e.key.toUpperCase();
             if (EXP_CONFIG.keys.judge.includes(key)) {
+                // 移除当前监听
+                $(document).off("keydown", judgeHandler);
                 hideTextPanel();
                 // 计算方向判断反应时
                 let rt1 = Date.now() - judgeStartTime1;
@@ -417,18 +372,22 @@ async function runSingleTrial() {
                 EXP_CONFIG.trialTemp.status1 = status1;
                 resolve();
             }
-        });
+        };
+        $(document).on("keydown", judgeHandler);
     });
 
     // 显示第一次信心评分，并记录开始时间
     const confStartTime1 = Date.now();
+    showTextPanel(`<h3>信心评分</h3>
+        <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
+        <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, "confidence");
+    
+    // 等待信心评分按键
     await new Promise(resolve => {
-        // 修改：信心评分排成一行
-        showTextPanel(`<h3>信心评分</h3>
-            <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
-            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
+        const confHandler = (e) => {
             let confKey = e.key.toUpperCase();
             if (EXP_CONFIG.keys.confidence.includes(confKey)) {
+                $(document).off("keydown", confHandler);
                 hideTextPanel();
                 // 计算信心评分反应时
                 let rt_conf1 = Date.now() - confStartTime1;
@@ -436,7 +395,8 @@ async function runSingleTrial() {
                 EXP_CONFIG.trialTemp.rt_conf1 = rt_conf1;
                 resolve();
             }
-        });
+        };
+        $(document).on("keydown", confHandler);
     });
 
     // ========== 第二次判断流程（精准时序） ==========
@@ -455,11 +415,14 @@ async function runSingleTrial() {
 
     // 显示第二次判断提示页，并记录开始时间
     const judgeStartTime2 = Date.now();
+    showTextPanel(`<h3>请做第二次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, "judge");
+    
+    // 等待第二次判断按键
     await new Promise(resolve => {
-        // 修改：第二次判断标题+VB键提示
-        showTextPanel(`<h3>请做第二次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
+        const judgeHandler2 = (e) => {
             let key2 = e.key.toUpperCase();
             if (EXP_CONFIG.keys.judge.includes(key2)) {
+                $(document).off("keydown", judgeHandler2);
                 hideTextPanel();
                 // 计算第二次方向判断反应时
                 let rt2 = Date.now() - judgeStartTime2;
@@ -469,18 +432,22 @@ async function runSingleTrial() {
                 EXP_CONFIG.trialTemp.status2 = status2;
                 resolve();
             }
-        });
+        };
+        $(document).on("keydown", judgeHandler2);
     });
 
     // 显示第二次信心评分，并记录开始时间
     const confStartTime2 = Date.now();
+    showTextPanel(`<h3>信心评分</h3>
+        <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
+        <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, "confidence");
+    
+    // 等待第二次信心评分按键
     await new Promise(resolve => {
-        // 修改：信心评分排成一行
-        showTextPanel(`<h3>信心评分</h3>
-            <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
-            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
+        const confHandler2 = (e) => {
             let confKey2 = e.key.toUpperCase();
             if (EXP_CONFIG.keys.confidence.includes(confKey2)) {
+                $(document).off("keydown", confHandler2);
                 hideTextPanel();
                 // 计算第二次信心评分反应时
                 let rt_conf2 = Date.now() - confStartTime2;
@@ -491,7 +458,8 @@ async function runSingleTrial() {
                 EXP_CONFIG.trialTemp.completeTime = getFormattedTime();
                 resolve();
             }
-        });
+        };
+        $(document).on("keydown", confHandler2);
     });
 
     // 保存当前试次数据（包含实时完成时间）
@@ -520,7 +488,7 @@ async function runSingleTrial() {
     runSingleTrial();
 }
 
-// 8. 实验结束：导出数据
+// 9. 实验结束：导出数据
 function endExperiment() {
     let correct1 = EXP_CONFIG.expData.filter(d => d.第一次判断结果 === "CORRECT").length;
     let correct2 = EXP_CONFIG.expData.filter(d => d.第二次判断结果 === "CORRECT").length;
@@ -533,14 +501,19 @@ function endExperiment() {
         <p>感谢你的参与！</p>
         <p>第一次判断正确率：${acc1}%</p>
         <p>第二次判断正确率：${acc2}%</p>
-        <p>按任意键导出数据并结束</p>`, () => {
+        <p>按任意键导出数据并结束</p>`, "stageResult");
+    
+    // 等待任意键导出数据
+    const endHandler = (e) => {
+        $(document).off("keydown", endHandler);
+        hideTextPanel();
         exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_捕捉点阵游戏数据.csv`);
         $expContainer.hide();
-        hideTextPanel();
-    });
+    };
+    $(document).on("keydown", endHandler);
 }
 
-// 9. CSV导出工具函数
+// 10. CSV导出工具函数
 function exportCSV(data, filename) {
     const headers = Object.keys(data[0]).join(",");
     const rows = data.map(d => Object.values(d).join(",")).join("\n");
@@ -557,6 +530,42 @@ function exportCSV(data, filename) {
     URL.revokeObjectURL(url);
 }
 
+// ===================== 全局按键监听（统一管理所有按键） =====================
+$(document).on("keydown", function(e) {
+    // 阶段结果页：Q/P键逻辑
+    if (KEY_STATE.isStageResult) {
+        let key = e.key.toLowerCase();
+        
+        // 练习阶段结果页
+        if (EXP_CONFIG.stage === "practice") {
+            if (key === "q" && KEY_STATE.currentAccuracy >= 60) {
+                hideTextPanel();
+                EXP_CONFIG.stage = "formal1";
+                EXP_CONFIG.currentTrial = 0;
+                runSingleTrial();
+            } else if (key === "p" && KEY_STATE.currentAccuracy < 60) {
+                hideTextPanel();
+                EXP_CONFIG.currentTrial = 0;
+                EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => !d.刺激名称.includes("c30"));
+                runSingleTrial();
+            }
+        }
+        // 正式第一轮结果页
+        else if (EXP_CONFIG.stage === "formal1" && key === "q") {
+            hideTextPanel();
+            EXP_CONFIG.stage = "formal2";
+            EXP_CONFIG.currentTrial = 0;
+            runSingleTrial();
+        }
+    }
+
+    // 指导语页：空格键开始
+    if (KEY_STATE.isInstruction && e.code === "Space") {
+        hideTextPanel();
+        runSingleTrial();
+    }
+});
+
 // ===================== 实验初始化 =====================
 $(document).ready(async () => {
     // 预加载第一个视频
@@ -570,7 +579,7 @@ $(document).ready(async () => {
     // 开始游戏按钮点击事件
     $startBtn.click(() => {
         $startScreen.removeClass("show");
-        // 仅修改：点阵示意图上下空行（margin: 5px auto），其余内容完全保留最初版本
+        // 显示指导语，标记为指导语页
         showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3>
             <p>你将看到两个点阵，其中一个点阵中有一部分点会规律水平运动（向左/向右），</p>
             <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有规律运动。在每一轮里，你需要完成两次判断。</p><br>
@@ -582,14 +591,6 @@ $(document).ready(async () => {
             <p>每次判断后，请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
             <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p><br>
             <p>如果你理解了以上规则，请你将手指放到键盘对应的位置上</p>
-            <p><strong>请按空格键继续</strong></p>`, (e) => {
-            if (e.code === 'Space') {
-                hideTextPanel();
-                runSingleTrial();
-            }
-        });
+            <p><strong>请按空格键继续</strong></p>`, "instruction");
     });
 });
-
-
-
