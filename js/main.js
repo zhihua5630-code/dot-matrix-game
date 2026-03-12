@@ -260,28 +260,33 @@ async function runSingleTrial() {
     await playStimulusVideo(EXP_CONFIG.currentStimulus.url, EXP_CONFIG.videoPlayTime);
     $expContainer.hide();
 
-    const t1 = Date.now();
+    const judgeStartTime1 = Date.now();
     await new Promise(resolve => {
-        showTextPanel(`<h3>请做第一次判断</h3><p>V 左有规律　B 右有规律</p>`, e => {
-            const k = e.key.toUpperCase();
-            if (EXP_CONFIG.keys.judge.includes(k)) {
+        showTextPanel(`<h3>请做第一次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
+            let key = e.key.toUpperCase();
+            if (EXP_CONFIG.keys.judge.includes(key)) {
                 hideTextPanel();
-                EXP_CONFIG.trialTemp.key1 = k;
-                EXP_CONFIG.trialTemp.rt1 = Date.now() - t1;
-                EXP_CONFIG.trialTemp.status1 = k === EXP_CONFIG.trialTemp.correctKey ? "CORRECT" : "INCORRECT";
+                let rt1 = Date.now() - judgeStartTime1;
+                let status1 = (key === EXP_CONFIG.trialTemp.correctKey) ? "CORRECT" : "INCORRECT";
+                EXP_CONFIG.trialTemp.key1 = key;
+                EXP_CONFIG.trialTemp.rt1 = rt1;
+                EXP_CONFIG.trialTemp.status1 = status1;
                 resolve();
             }
         });
     });
 
-    const c1 = Date.now();
+    const confStartTime1 = Date.now();
     await new Promise(resolve => {
-        showTextPanel(`<h3>信心评分</h3><p>1 完全没信心　2 不太有信心　3 比较有信心　4 非常有信心</p>`, e => {
-            const k = e.key.toUpperCase();
-            if (EXP_CONFIG.keys.confidence.includes(k)) {
+        showTextPanel(`<h3>信心评分</h3>
+            <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
+            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
+            let confKey = e.key.toUpperCase();
+            if (EXP_CONFIG.keys.confidence.includes(confKey)) {
                 hideTextPanel();
-                EXP_CONFIG.trialTemp.conf1 = k;
-                EXP_CONFIG.trialTemp.rt_conf1 = Date.now() - c1;
+                let rt_conf1 = Date.now() - confStartTime1;
+                EXP_CONFIG.trialTemp.conf1 = confKey;
+                EXP_CONFIG.trialTemp.rt_conf1 = rt_conf1;
                 resolve();
             }
         });
@@ -289,35 +294,40 @@ async function runSingleTrial() {
 
     // ---------- 第二次流程 ----------
     $expContainer.css("display", "flex");
-    drawFixPoint("#fff");
+    drawFixPoint("#ffffff");
     await wait(EXP_CONFIG.fixPointTime2);
     clearCanvas();
     await wait(EXP_CONFIG.blankScreenTime);
     await playStimulusVideo(EXP_CONFIG.currentStimulus.url, EXP_CONFIG.videoPlayTime);
     $expContainer.hide();
 
-    const t2 = Date.now();
+    const judgeStartTime2 = Date.now();
     await new Promise(resolve => {
-        showTextPanel(`<h3>请做第二次判断</h3><p>V 左有规律　B 右有规律</p>`, e => {
-            const k = e.key.toUpperCase();
-            if (EXP_CONFIG.keys.judge.includes(k)) {
+        showTextPanel(`<h3>请做第二次判断</h3><p>“V” 左侧有规律，“B” 右侧有规律</p>`, async (e) => {
+            let key2 = e.key.toUpperCase();
+            if (EXP_CONFIG.keys.judge.includes(key2)) {
                 hideTextPanel();
-                EXP_CONFIG.trialTemp.key2 = k;
-                EXP_CONFIG.trialTemp.rt2 = Date.now() - t2;
-                EXP_CONFIG.trialTemp.status2 = k === EXP_CONFIG.trialTemp.correctKey ? "CORRECT" : "INCORRECT";
+                let rt2 = Date.now() - judgeStartTime2;
+                let status2 = (key2 === EXP_CONFIG.trialTemp.correctKey) ? "CORRECT" : "INCORRECT";
+                EXP_CONFIG.trialTemp.key2 = key2;
+                EXP_CONFIG.trialTemp.rt2 = rt2;
+                EXP_CONFIG.trialTemp.status2 = status2;
                 resolve();
             }
         });
     });
 
-    const c2 = Date.now();
+    const confStartTime2 = Date.now();
     await new Promise(resolve => {
-        showTextPanel(`<h3>信心评分</h3><p>1 完全没信心　2 不太有信心　3 比较有信心　4 非常有信心</p>`, e => {
-            const k = e.key.toUpperCase();
-            if (EXP_CONFIG.keys.confidence.includes(k)) {
+        showTextPanel(`<h3>信心评分</h3>
+            <p>判断后请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
+            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p>`, async (e) => {
+            let confKey2 = e.key.toUpperCase();
+            if (EXP_CONFIG.keys.confidence.includes(confKey2)) {
                 hideTextPanel();
-                EXP_CONFIG.trialTemp.conf2 = k;
-                EXP_CONFIG.trialTemp.rt_conf2 = Date.now() - c2;
+                let rt_conf2 = Date.now() - confStartTime2;
+                EXP_CONFIG.trialTemp.conf2 = confKey2;
+                EXP_CONFIG.trialTemp.rt_conf2 = rt_conf2;
                 resolve();
             }
         });
@@ -329,19 +339,19 @@ async function runSingleTrial() {
         被试姓名: EXP_CONFIG.subjectName,
         被试编号: EXP_CONFIG.subjectId,
         试次: EXP_CONFIG.currentTrial+1,
-        刺激: EXP_CONFIG.trialTemp.stimName,
-        正确键: EXP_CONFIG.trialTemp.correctKey,
-        一按键: EXP_CONFIG.trialTemp.key1,
-        一反应时: EXP_CONFIG.trialTemp.rt1,
-        一结果: EXP_CONFIG.trialTemp.status1,
-        一信心: EXP_CONFIG.trialTemp.conf1,
-        一信时: EXP_CONFIG.trialTemp.rt_conf1,
-        二按键: EXP_CONFIG.trialTemp.key2,
-        二反应时: EXP_CONFIG.trialTemp.rt2,
-        二结果: EXP_CONFIG.trialTemp.status2,
-        二信心: EXP_CONFIG.trialTemp.conf2,
-        二信时: EXP_CONFIG.trialTemp.rt_conf2,
-        完成时间: EXP_CONFIG.trialTemp.completeTime
+        刺激名称: EXP_CONFIG.trialTemp.stimName,
+        正确按键: EXP_CONFIG.trialTemp.correctKey,
+        第一次判断按键: EXP_CONFIG.trialTemp.key1,
+        第一次判断反应时: EXP_CONFIG.trialTemp.rt1,
+        第一次判断结果: EXP_CONFIG.trialTemp.status1,
+        第一次信心评分: EXP_CONFIG.trialTemp.conf1,
+        第一次信心评分反应时: EXP_CONFIG.trialTemp.rt_conf1,
+        第二次判断按键: EXP_CONFIG.trialTemp.key2,
+        第二次判断反应时: EXP_CONFIG.trialTemp.rt2,
+        第二次判断结果: EXP_CONFIG.trialTemp.status2,
+        第二次信心评分: EXP_CONFIG.trialTemp.conf2,
+        第二次信心评分反应时: EXP_CONFIG.trialTemp.rt_conf2,
+        试次完成实时时间: EXP_CONFIG.trialTemp.completeTime
     });
 
     EXP_CONFIG.currentTrial++;
@@ -351,7 +361,7 @@ async function runSingleTrial() {
 // ===================== 阶段结果 & 流程控制 =====================
 function showStageResult() {
     let dataInStage = EXP_CONFIG.expData.filter(d => d.阶段 === EXP_CONFIG.stage);
-    let correct = dataInStage.filter(d => d.一结果 === "CORRECT").length;
+    let correct = dataInStage.filter(d => d.第一次判断结果 === "CORRECT").length;
     let total = dataInStage.length;
     let acc = (correct / total * 100).toFixed(1);
 
@@ -410,7 +420,7 @@ function showStageResult() {
 
 // ===================== 实验结束 =====================
 function endExperiment() {
-    showTextPanel(`<h3>感谢参与！</h3><p>正在导出数据…</p>`, () => {
+    showTextPanel(`<h3>感谢参与！</h3><p>按任意键导出数据</p>`, () => {
         exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_点阵数据.csv`);
         $expContainer.hide();
         hideTextPanel();
@@ -439,13 +449,18 @@ $(document).ready(async () => {
 
     $startBtn.click(() => {
         $startScreen.removeClass("show");
-        showTextPanel(`
-            <h3>欢迎参加实验</h3>
-            <p>请判断：左边有规律按 V，右边有规律按 B</p>
-            <p>每次判断后进行1‑4信心评分</p>
-            <p>按<strong>空格键</strong>开始练习</p>
-        `, e => {
-            if (e.code === "Space") {
+        // 完全恢复你原来的指导语！！！
+        showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3>
+            <p>你将看到两个点阵，其中一个点阵中有一部分点会规律水平运动（向左/向右），</p>
+            <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有规律运动。在每一轮里，你需要完成两次判断。</p><br>
+            <p>箭头代表点的运动方向（正式实验中没有箭头提示）。</p>
+            <p>左侧代表点有规律的运动，右侧代表点无规律的运动。</p><br>
+            <p style="background-color: yellow; color: black; padding: 5px;"><strong>左侧有规律用右手食指按“V”键，右侧有规律用右手中指按“B”键</strong></p><br>
+            <p>每次判断后，请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
+            <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p><br>
+            <p>如果你理解了以上规则，请你将手指放到键盘对应的位置上</p>
+            <p><strong>请按空格键继续</strong></p>`, e => {
+            if (e.code === 'Space') {
                 hideTextPanel();
                 runSingleTrial();
             }
