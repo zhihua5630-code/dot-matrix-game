@@ -210,20 +210,17 @@ function playStimulusVideo(url, duration) {
     });
 }
 
-// ===================== 阶段结果展示（只改Q→O + 第二次正确率） =====================
+// ===================== 阶段结果展示（修复正确率计算错误） =====================
 function showStageResult() {
-    let dataInStage = EXP_CONFIG.expData.filter(d => {
-        if (EXP_CONFIG.stage === "practice") {
-            return d.刺激名称.includes("c30");
-        } else {
-            return true;
-        }
-    });
+    // 修复1：按「阶段字段」精准筛选当前阶段的数，而非刺激名称/全部数据
+    let dataInStage = EXP_CONFIG.expData.filter(d => d.阶段 === EXP_CONFIG.stage);
+    
+    // 修复2：分母用实际筛选后的试次数，而非固定值；增加total>0避免除以0
     let correct1 = dataInStage.filter(d => d.第一次判断结果 === "CORRECT").length;
     let correct2 = dataInStage.filter(d => d.第二次判断结果 === "CORRECT").length;
-    let total = EXP_CONFIG.stage === "practice" ? EXP_CONFIG.practiceTrialCount : EXP_CONFIG.formalTrialsPerRound;
-    let acc1 = (correct1 / total * 100).toFixed(1);
-    let acc2 = (correct2 / total * 100).toFixed(1);
+    let total = dataInStage.length;
+    let acc1 = total > 0 ? (correct1 / total * 100).toFixed(1) : "0.0";
+    let acc2 = total > 0 ? (correct2 / total * 100).toFixed(1) : "0.0";
 
     let content = "";
     if (EXP_CONFIG.stage === "practice") {
@@ -261,7 +258,8 @@ function showStageResult() {
                 runSingleTrial();
             } else if (acc1 < 60 && key === "P") {
                 EXP_CONFIG.currentTrial = 0;
-                EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => !d.刺激名称.includes("c30"));
+                // 额外优化：重新练习时，只删除练习阶段数据（而非按刺激名称）
+                EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => d.阶段 !== "practice");
                 $textPanel.hide();
                 $(document).off("keydown");
                 runSingleTrial();
@@ -279,7 +277,6 @@ function showStageResult() {
         }
     });
 }
-
 // ===================== 单个试次流程 =====================
 async function runSingleTrial() {
     let maxTrials, currentStimuli;
