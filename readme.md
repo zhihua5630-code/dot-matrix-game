@@ -12,5 +12,6 @@
 
 * oss登录
 	* 链接：https://signin.aliyun.com/31335427.onaliyun.com/login.htm
-	* 账户：zhihua@31335427.onaliyun.com
+	* 账户：陈志华 zhihua@31335427.onaliyun.com
 		* 绑定了bucket是dot-matrix的读写权限
+	* 密码：陈志华 掌握，因为绑定她的手机号和邮箱
