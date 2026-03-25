@@ -450,13 +450,25 @@ function exportCSV(data, filename) {
     const headers = Object.keys(data[0]).join(",");
     const rows = data.map(d => Object.values(d).join(",")).join("\n");
     const csv = headers + "\n" + rows;
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    // const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    // const url = URL.createObjectURL(blob);
+    // const a = document.createElement("a");
+    // a.href = url;
+    // a.download = filename;
+    // a.click();
+    // URL.revokeObjectURL(url);
+
+    // ========== 2. 同时上传到服务器（安全版） ==========
+    // 用 .then() 替代 await，不需要 async
+    fetch("https://xcx.51putong.com/upload-dot-csv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ csv, filename })
+    }).then(() => {
+        console.log("✅ 数据已保存到阿里云OSS");
+    }).catch((err) => {
+        console.error("❌ 上传失败", err);
+    });
 }
 
 // ===================== 实验初始化（完全还原你原来的指导语） =====================
@@ -465,6 +477,14 @@ $(document).ready(async () => {
     testVideo.muted = true;
     testVideo.src = EXP_CONFIG.practiceStimuli[0].url;
     testVideo.play().then(()=>testVideo.pause()).catch(()=>{});
+
+    // //test
+    // expData = [];
+    // expData.push({
+    //     阶段: "EXP_CONF",
+    //     被试姓名: "subjectName"
+    // });
+    // exportCSV(expData, `test_捕捉点阵游戏数据.csv`);
 
     $startBtn.click(() => {
         $startScreen.removeClass("show");
