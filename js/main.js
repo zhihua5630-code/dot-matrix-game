@@ -4,8 +4,7 @@ const EXP_CONFIG = {
     subjectId: "",
     trialCount: 12,
     practiceTrialCount: 4,
-    formalTrialsTotal: 72,
-    formalBlockSize: 18,
+    formalTrialsPerRound: 60,
     stage: "practice",
     practiceStimuli: [
         { name: "c30LL", correctKey: "V", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c30LL.mp4" },
@@ -32,6 +31,20 @@ const EXP_CONFIG = {
     blankScreenTime: 100,
     videoPlayTime: 2500,
     responseTimeout: 10000,
+    stimuli: [
+        { name: "c20LL", correctKey: "V", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c20LL.mp4" },
+        { name: "c20LR", correctKey: "V", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c20LR.mp4" },
+        { name: "c20RL", correctKey: "B", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c20RL.mp4" },
+        { name: "c20RR", correctKey: "B", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c20RR.mp4" },
+        { name: "c30LL", correctKey: "V", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c30LL.mp4" },
+        { name: "c30LR", correctKey: "V", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c30LR.mp4" },
+        { name: "c30RL", correctKey: "B", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c30RL.mp4" },
+        { name: "c30RR", correctKey: "B", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c30RR.mp4" },
+        { name: "c40LL", correctKey: "V", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c40LL.mp4" },
+        { name: "c40LR", correctKey: "V", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c40LR.mp4" },
+        { name: "c40RL", correctKey: "B", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c40RL.mp4" },
+        { name: "c40RR", correctKey: "B", url: "https://dot-matrix.oss-accelerate.aliyuncs.com/videos/c40RR.mp4" },
+    ],
     keys: {
         judge: ["V", "B"],
         confidence: ["1","2","3","4"]
@@ -46,7 +59,8 @@ const EXP_CONFIG = {
         key2: "", rt2: 0, status2: "", conf2: "", rt_conf2: 0,
         completeTime: ""
     },
-    videoCache: {}
+    videoCache: {},
+    formalBlockSize: 18
 };
 
 // ===================== 页面元素初始化 =====================
@@ -151,181 +165,175 @@ function getFormattedTime() {
     return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 }
 
-// ===================== 预加载所有视频 =====================
+// ===================== 新增：视频预加载 =====================
 async function preloadAllVideos() {
-    const allVideos = [...EXP_CONFIG.practiceStimuli, ...EXP_CONFIG.formalStimuli];
-    const uniqueUrls = Array.from(new Set(allVideos.map(v => v.url)));
+    const all = [...EXP_CONFIG.practiceStimuli, ...EXP_CONFIG.formalStimuli];
+    const urls = Array.from(new Set(all.map(v => v.url)));
+    const total = urls.length;
     let loaded = 0;
 
-    return new Promise((resolve) => {
-        showTextPanel(`<h3>正在加载视频，请稍候...</h3><p>加载进度：${loaded}/${uniqueUrls.length}</p>`, null);
+    showTextPanel(`<h3>正在加载视频，请稍候...</h3><p>加载进度：${loaded}/${total}</p>`);
 
-        uniqueUrls.forEach(url => {
-            const video = document.createElement("video");
-            video.muted = true;
-            video.preload = "auto";
-            video.src = url;
-
-            video.addEventListener("canplaythrough", () => {
-                EXP_CONFIG.videoCache[url] = video;
+    for (const url of urls) {
+        await new Promise((resolve) => {
+            const v = document.createElement("video");
+            v.muted = true;
+            v.src = url;
+            v.oncanplaythrough = () => {
+                EXP_CONFIG.videoCache[url] = v;
                 loaded++;
-                $panelContent.html(`<h3>正在加载视频，请稍候...</h3><p>加载进度：${loaded}/${uniqueUrls.length}</p>`);
-                if (loaded === uniqueUrls.length) {
-                    hideTextPanel();
-                    resolve();
-                }
-            });
-
-            video.load();
+                $panelContent.html(`<h3>正在加载视频，请稍候...</h3><p>加载进度：${loaded}/${total}</p>`);
+                resolve();
+            };
+            v.onerror = () => { loaded++; resolve(); };
+            v.load();
         });
-    });
+    }
+    hideTextPanel();
 }
 
 // ===================== 从缓存播放视频 =====================
 function playStimulusVideo(url, duration) {
     return new Promise((resolve) => {
         const video = EXP_CONFIG.videoCache[url];
-        if (!video) {
-            console.warn("视频未缓存:", url);
-            resolve();
-            return;
-        }
-
+        if (!video) { resolve(); return; }
         video.currentTime = 0;
         video.play();
 
-        const drawFrame = () => {
-            if (!video.paused && !video.ended) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                requestAnimationFrame(drawFrame);
+        const draw = () => {
+            if (!video.paused) {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                ctx.drawImage(video,0,0,canvas.width,canvas.height);
+                requestAnimationFrame(draw);
             }
         };
-        drawFrame();
+        draw();
 
         setTimeout(() => {
             video.pause();
-            video.currentTime = 0;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0,0,canvas.width,canvas.height);
             resolve();
         }, duration);
     });
 }
 
-// ===================== 分块上传 + 清空数据 =====================
-function uploadBlockData(blockIndex) {
-    if (EXP_CONFIG.expData.length === 0) {
-        console.log("当前组无数据，跳过上传");
-        return Promise.resolve();
-    }
-
+// ===================== 新增：每18个上传并清空 =====================
+function uploadAndClearBlock(blockIndex) {
+    if (EXP_CONFIG.expData.length === 0) return Promise.resolve();
     const headers = Object.keys(EXP_CONFIG.expData[0]).join(",");
     const rows = EXP_CONFIG.expData.map(d => Object.values(d).join(",")).join("\n");
     const csv = headers + "\n" + rows;
-    const filename = `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${blockIndex}组_18个试次.csv`;
+    const fn = `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_block${blockIndex}.csv`;
 
     return fetch("https://xcx.51putong.com/upload-dot-csv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv, filename })
-    })
-    .then(() => {
-        console.log(`✅ 第${blockIndex}组上传成功`);
+        body: JSON.stringify({ csv, filename: fn })
+    }).then(() => {
         EXP_CONFIG.expData = [];
-    })
-    .catch(err => console.error("❌ 上传失败", err));
+    });
 }
 
-// ===================== 休息页面 =====================
+// ===================== 休息界面 =====================
 function showRestScreen(blockIndex, callback) {
-    showTextPanel(`
-        <h3>第 ${blockIndex} 组完成，请休息一下</h3>
-        <p>数据已自动保存</p>
-        <p>准备好后按空格键继续</p>
-    `, (e) => {
-        if (e.code === "Space") {
-            hideTextPanel();
-            callback();
-        }
+    showTextPanel(`<h3>第 ${blockIndex} 组完成</h3><p>数据已保存</p><p>按空格继续</p>`, e => {
+        if (e.code === "Space") { hideTextPanel(); callback(); }
     });
 }
 
 // ===================== 阶段结果展示 =====================
 function showStageResult() {
     let dataInStage = EXP_CONFIG.expData.filter(d => d.阶段 === EXP_CONFIG.stage);
-    let total = dataInStage.length || 1;
     let correct1 = dataInStage.filter(d => d.第一次判断结果 === "CORRECT").length;
     let correct2 = dataInStage.filter(d => d.第二次判断结果 === "CORRECT").length;
-    let acc1 = (correct1 / total * 100).toFixed(1);
-    let acc2 = (correct2 / total * 100).toFixed(1);
+    let total = dataInStage.length || 1;
+    let acc1 = ((correct1 / total) * 100).toFixed(1);
+    let acc2 = ((correct2 / total) * 100).toFixed(1);
 
-    let content = `<h3>练习阶段结束！</h3>
-        <p>第一次判断正确率：${acc1}%</p>
-        <p>第二次判断正确率：${acc2}%</p>`;
-
-    if (acc1 >= 60) {
-        content += `<p>恭喜你达到合格标准！请按 <strong>O</strong> 键进入正式游戏第一轮</p>`;
-    } else {
-        content += `<p>正确率未达标，请按 <strong>P</strong> 键重新练习</p>`;
+    let content = "";
+    if (EXP_CONFIG.stage === "practice") {
+        content = `<h3>练习阶段结束！</h3>
+            <p>第一次判断正确率：${acc1}%</p>
+            <p>第二次判断正确率：${acc2}%</p>`;
+        if (acc1 >= 60) {
+            content += `<p>恭喜合格！按 O 进入正式第一轮</p>`;
+        } else {
+            content += `<p>按 P 重新练习</p>`;
+        }
+    } else if (EXP_CONFIG.stage === "formal1") {
+        content = `<h3>第一轮结束</h3><p>正确率1：${acc1}%  正确率2：${acc2}%</p><p>按 O 进入第二轮</p>`;
+    } else if (EXP_CONFIG.stage === "formal2") {
+        content = `<h3>第二轮结束</h3><p>正确率1：${acc1}%  正确率2：${acc2}%</p><p>按任意键结束</p>`;
     }
 
     $panelContent.html(content);
     $textPanel.css("display", "flex");
-
     $(document).off("keydown").on("keydown", function(e) {
         const key = e.key.toUpperCase();
-        if (acc1 >= 60 && key === "O") {
-            EXP_CONFIG.stage = "formal1";
+        if (EXP_CONFIG.stage === "practice") {
+            if (acc1 >= 60 && key === "O") {
+                EXP_CONFIG.stage = "formal1";
+                EXP_CONFIG.currentTrial = 0;
+                $textPanel.hide();
+                runSingleTrial();
+            } else if (acc1 < 60 && key === "P") {
+                EXP_CONFIG.currentTrial = 0;
+                EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => d.阶段 !== "practice");
+                $textPanel.hide();
+                runSingleTrial();
+            }
+        } else if (EXP_CONFIG.stage === "formal1" && key === "O") {
+            EXP_CONFIG.stage = "formal2";
             EXP_CONFIG.currentTrial = 0;
             $textPanel.hide();
             runSingleTrial();
-        } else if (acc1 < 60 && key === "P") {
-            EXP_CONFIG.currentTrial = 0;
-            EXP_CONFIG.expData = EXP_CONFIG.expData.filter(d => d.阶段 !== "practice");
+        } else if (EXP_CONFIG.stage === "formal2") {
             $textPanel.hide();
-            runSingleTrial();
+            endExperiment();
         }
     });
 }
 
 // ===================== 单个试次流程 =====================
 async function runSingleTrial() {
+    let maxTrials, currentStimuli;
     if (EXP_CONFIG.stage === "practice") {
-        if (EXP_CONFIG.currentTrial >= EXP_CONFIG.practiceTrialCount) {
-            showStageResult();
-            return;
-        }
+        maxTrials = EXP_CONFIG.practiceTrialCount;
+        currentStimuli = EXP_CONFIG.practiceStimuli;
     } else {
-        if (EXP_CONFIG.currentTrial >= EXP_CONFIG.formalTrialsTotal) {
-            endExperiment();
-            return;
-        }
-
-        if (EXP_CONFIG.currentTrial % EXP_CONFIG.formalBlockSize === 0 && EXP_CONFIG.currentTrial > 0) {
-            const blockIndex = Math.floor(EXP_CONFIG.currentTrial / EXP_CONFIG.formalBlockSize);
-            await uploadBlockData(blockIndex);
-            await new Promise(resolve => showRestScreen(blockIndex, resolve));
-        }
+        maxTrials = EXP_CONFIG.formalTrialsPerRound;
+        currentStimuli = EXP_CONFIG.formalStimuli;
     }
 
-    const currentStimuli = EXP_CONFIG.stage === "practice"
-        ? EXP_CONFIG.practiceStimuli
-        : EXP_CONFIG.formalStimuli;
+    if (EXP_CONFIG.currentTrial >= maxTrials) {
+        showStageResult();
+        return;
+    }
 
-    const shuffledKey = `shuffled_${EXP_CONFIG.stage}`;
-    if (!EXP_CONFIG[shuffledKey]) {
-        EXP_CONFIG[shuffledKey] = [];
-        for (let i = 0; i < 10; i++) {
-            const s = [...currentStimuli];
-            for (let j = s.length - 1; j > 0; j--) {
-                const k = Math.floor(Math.random() * (j + 1));
-                [s[j], s[k]] = [s[k], s[j]];
+    // 每18个试次自动上传+清空
+    if (EXP_CONFIG.stage.startsWith("formal") && EXP_CONFIG.currentTrial > 0 && EXP_CONFIG.currentTrial % EXP_CONFIG.formalBlockSize === 0) {
+        const block = Math.floor(EXP_CONFIG.currentTrial / EXP_CONFIG.formalBlockSize);
+        await uploadAndClearBlock(block);
+        await new Promise(resolve => showRestScreen(block, resolve));
+    }
+
+    if (EXP_CONFIG.stage === "practice") {
+        EXP_CONFIG.currentStimulus = currentStimuli[EXP_CONFIG.currentTrial];
+    } else {
+        let k = `shuffled_${EXP_CONFIG.stage}`;
+        if (!EXP_CONFIG[k]) {
+            EXP_CONFIG[k] = [];
+            for (let i=0;i<5;i++) {
+                let s = [...currentStimuli];
+                for (let j=s.length-1;j>0;j--) {
+                    let r = Math.floor(Math.random()*(j+1));
+                    [s[j],s[r]] = [s[r],s[j]];
+                }
+                EXP_CONFIG[k] = EXP_CONFIG[k].concat(s);
             }
-            EXP_CONFIG[shuffledKey].push(...s);
         }
+        EXP_CONFIG.currentStimulus = EXP_CONFIG[k][EXP_CONFIG.currentTrial];
     }
-
-    EXP_CONFIG.currentStimulus = EXP_CONFIG[shuffledKey][EXP_CONFIG.currentTrial];
 
     EXP_CONFIG.trialTemp = {
         stimName: EXP_CONFIG.currentStimulus.name,
@@ -441,11 +449,25 @@ async function runSingleTrial() {
 }
 
 // ===================== 实验结束 =====================
-async function endExperiment() {
-    await uploadBlockData(4);
+function endExperiment() {
+    let correct1 = EXP_CONFIG.expData.filter(d => d.第一次判断结果 === "CORRECT").length;
+    let correct2 = EXP_CONFIG.expData.filter(d => d.第二次判断结果 === "CORRECT").length;
+    let totalTrials = EXP_CONFIG.expData.length || 1;
+    let acc1 = ((correct1 / totalTrials) * 100).toFixed(1);
+    let acc2 = ((correct2 / totalTrials) * 100).toFixed(1);
+
     showTextPanel(`<h3>游戏完成！</h3>
-        <p>感谢你的参与！</p>
-        <p>按任意键结束</p>`, () => {
+        <p>感谢参与</p>
+        <p>正确率1：${acc1}%  正确率2：${acc2}%</p>`, () => {
+        const headers = Object.keys(EXP_CONFIG.expData[0]).join(",");
+        const rows = EXP_CONFIG.expData.map(d => Object.values(d).join(",")).join("\n");
+        const csv = headers + "\n" + rows;
+        const fn = `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_final.csv`;
+        fetch("https://xcx.51putong.com/upload-dot-csv", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ csv, filename: fn })
+        });
         $expContainer.hide();
         hideTextPanel();
     });
@@ -456,12 +478,13 @@ $(document).ready(async () => {
     $startBtn.click(async () => {
         $startScreen.removeClass("show");
         await preloadAllVideos();
-
         showTextPanel(`<h3>欢迎参加捕捉点阵游戏！</h3>
             <p>你将看到两个点阵，其中一个点阵中有一部分点会一致性向左/向右运动，</p>
             <p>另一个点阵的点全部随机运动。请判断哪边点阵的点有一致性运动。在每一轮里，你需要完成两次判断。</p><br>
             <img src="./image/dot-example.png" alt="点阵示意图" style="max-width: 80%; height: auto; margin: 5px auto; display: block;"><br>
-            <p style="background-color: yellow; color: black; padding: 5px;"><strong>左侧有一致性运动按“V”键，右侧有一致性运动按“B”键</strong></p><br>
+            <p>箭头代表点的运动方向（正式实验中没有箭头提示）。</p>
+            <p>示意图中，左侧点阵代表点有一致性运动，右侧点阵代表点随机运动。</p><br>
+            <p style="background-color: yellow; color: black; padding: 5px;"><strong>左侧有规律用右手食指按“V”键，右侧有规律用右手中指按“B”键</strong></p><br>
             <p>每次判断后，请告诉我，你觉得自己做对了吗？对自己做对的信心如何呢，请用左手食指按1-4键：</p>
             <p>1：😭 完全没信心 &nbsp;&nbsp; 2：🙁 不太有信心 &nbsp;&nbsp; 3：🙂 比较有信心 &nbsp;&nbsp; 4：😃 非常有信心</p><br>
             <p>如果你理解了以上规则，请你将手指放到键盘对应的位置上</p>
