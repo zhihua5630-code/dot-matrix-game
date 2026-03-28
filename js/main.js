@@ -218,14 +218,19 @@ async function finishBlock() {
     const acc1 = total > 0 ? (correct1 / total * 100).toFixed(1) : "0.0";
     const acc2 = total > 0 ? (correct2 / total * 100).toFixed(1) : "0.0";
 
-    // 上传本组数据
+    // 先判断是否是最后一组，再决定是否清空数据
+    if (block >= EXP_CONFIG.totalFormalBlocks) {
+    // 第四组：先显示正确率，不清空
+    endExperiment();
+    // 显示完再上传并清空
     exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
     EXP_CONFIG.expData = [];
-
-    if (block >= EXP_CONFIG.totalFormalBlocks) {
-        endExperiment();
-        return;
+    return;
     }
+
+    // 前1-3组：正常上传+清空
+    exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
+    EXP_CONFIG.expData = [];
 
     // 展示本组正确率
     showTextPanel(`
