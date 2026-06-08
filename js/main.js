@@ -231,11 +231,6 @@ async function finishBlock() {
             <p>所有数据已自动保存，请关闭页面。</p>
         `);
         $expContainer.hide();
-        //exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_捕捉点阵游戏数据.csv`);
-        //$expContainer.hide();
-        //hideTextPanel();
-    //});
-    // 第四组：先显示正确率，不清空
         return;
     }
 
