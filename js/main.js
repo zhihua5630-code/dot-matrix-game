@@ -221,7 +221,7 @@ async function finishBlock() {
     // 先上传本组数据
     exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
 
-    // 先判断是否是最后一组，再决定是否清空数据
+    // 先判断是否是最后一组
     if (block >= EXP_CONFIG.totalFormalBlocks) {
         showTextPanel(`
             <h3>游戏完成！</h3>
