@@ -217,19 +217,24 @@ async function finishBlock() {
     const correct2 = EXP_CONFIG.expData.filter(d => d.第二次判断结果 === "CORRECT").length;
     const acc1 = total > 0 ? (correct1 / total * 100).toFixed(1) : "0.0";
     const acc2 = total > 0 ? (correct2 / total * 100).toFixed(1) : "0.0";
+    
+    // 先上传本组数据
+    exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
 
-    // 先判断是否是最后一组，再决定是否清空数据
+    // 先判断是否是最后一组
     if (block >= EXP_CONFIG.totalFormalBlocks) {
-        // 第四组：先显示正确率，不清空
-        endExperiment();
-        // 显示完再上传并清空
-        exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
-        EXP_CONFIG.expData = [];
+        showTextPanel(`
+            <h3>游戏完成！</h3>
+            <p>感谢你的参与！</p>
+            <p>第一次判断正确率：${acc1}%</p>
+            <p>第二次判断正确率：${acc2}%</p>
+            <p>所有数据已自动保存，请关闭页面。</p>
+        `);
+        $expContainer.hide();
         return;
     }
 
     // 前1-3组：正常上传+清空
-    exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
     EXP_CONFIG.expData = [];
 
     // 展示本组正确率
@@ -446,23 +451,23 @@ async function runSingleTrial() {
 }
 
 // ===================== 实验结束（100% 原版） =====================
-function endExperiment() {
-    let correct1 = EXP_CONFIG.expData.filter(d => d.第一次判断结果 === "CORRECT").length;
-    let correct2 = EXP_CONFIG.expData.filter(d => d.第二次判断结果 === "CORRECT").length;
-    let totalTrials = EXP_CONFIG.expData.length;
-    let acc1 = totalTrials > 0 ? (correct1 / totalTrials * 100).toFixed(1) : "0.0";
-    let acc2 = totalTrials > 0 ? (correct2 / totalTrials * 100).toFixed(1) : "0.0";
+//function endExperiment() {
+    //let correct1 = EXP_CONFIG.expData.filter(d => d.第一次判断结果 === "CORRECT").length;
+    //let correct2 = EXP_CONFIG.expData.filter(d => d.第二次判断结果 === "CORRECT").length;
+    //let totalTrials = EXP_CONFIG.expData.length;
+    //let acc1 = totalTrials > 0 ? (correct1 / totalTrials * 100).toFixed(1) : "0.0";
+   // let acc2 = totalTrials > 0 ? (correct2 / totalTrials * 100).toFixed(1) : "0.0";
 
-    showTextPanel(`<h3>游戏完成！</h3>
-        <p>感谢你的参与！</p>
-        <p>第一次判断正确率：${acc1}%</p>
-        <p>第二次判断正确率：${acc2}%</p>
-        <p>按任意键导出数据并结束</p>`, () => {
-        exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_捕捉点阵游戏数据.csv`);
-        $expContainer.hide();
-        hideTextPanel();
-    });
-}
+    //showTextPanel(`<h3>游戏完成！</h3>
+        //<p>感谢你的参与！</p>
+        //<p>第一次判断正确率：${acc1}%</p>
+        //<p>第二次判断正确率：${acc2}%</p>
+        //<p>按任意键导出数据并结束</p>`, () => {
+        //exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_捕捉点阵游戏数据.csv`);
+        //$expContainer.hide();
+        //hideTextPanel();
+    //});
+//}
 
 // ===================== 【100% 和你图片一致】上传代码 =====================
 function exportCSV(data, filename) {
