@@ -217,6 +217,7 @@ async function finishBlock() {
     const correct2 = EXP_CONFIG.expData.filter(d => d.第二次判断结果 === "CORRECT").length;
     const acc1 = total > 0 ? (correct1 / total * 100).toFixed(1) : "0.0";
     const acc2 = total > 0 ? (correct2 / total * 100).toFixed(1) : "0.0";
+    
     // 先上传本组数据
     exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
 
