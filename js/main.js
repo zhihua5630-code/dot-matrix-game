@@ -218,14 +218,19 @@ async function finishBlock() {
     const acc1 = total > 0 ? (correct1 / total * 100).toFixed(1) : "0.0";
     const acc2 = total > 0 ? (correct2 / total * 100).toFixed(1) : "0.0";
 
-    // 上传本组数据
+    // 先判断是否是最后一组，再决定是否清空数据
+    if (block >= EXP_CONFIG.totalFormalBlocks) {
+    // 第四组：先显示正确率，不清空
+    endExperiment();
+    // 显示完再上传并清空
     exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
     EXP_CONFIG.expData = [];
-
-    if (block >= EXP_CONFIG.totalFormalBlocks) {
-        endExperiment();
-        return;
+    return;
     }
+
+    // 前1-3组：正常上传+清空
+    exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
+    EXP_CONFIG.expData = [];
 
     // 展示本组正确率
     showTextPanel(`
@@ -308,20 +313,24 @@ async function runSingleTrial() {
     if (EXP_CONFIG.stage === "practice") {
         EXP_CONFIG.currentStimulus = currentStimuli[EXP_CONFIG.currentTrial];
     } else {
-        let shuffledKey = `shuffled_formal`;
-        if (!EXP_CONFIG[shuffledKey]) {
-            EXP_CONFIG[shuffledKey] = [];
-            for (let i = 0; i < 6; i++) {
-                let shuffled = [...currentStimuli];
-                for (let j = shuffled.length - 1; j > 0; j--) {
-                    let k = Math.floor(Math.random() * (j + 1));
-                    [shuffled[j], shuffled[k]] = [shuffled[k], shuffled[j]];
-                }
-                EXP_CONFIG[shuffledKey] = EXP_CONFIG[shuffledKey].concat(shuffled);
-            }
+    let shuffledKey = `shuffled_formal`;
+    if (!EXP_CONFIG[shuffledKey]) {
+        // 生成 6 轮完整的 12 个刺激，共 72 试次
+        let fullList = [];
+        for (let r = 0; r < 6; r++) {
+            fullList = fullList.concat(currentStimuli);
         }
-        EXP_CONFIG.currentStimulus = EXP_CONFIG[shuffledKey][EXP_CONFIG.currentTrial];
+        // 全局一次性打乱
+        for (let i = fullList.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [fullList[i], fullList[j]] = [fullList[j], fullList[i]];
+        }
+        EXP_CONFIG[shuffledKey] = fullList;
     }
+    // 计算在全局 72 试次中的真实位置
+    let globalIndex = (EXP_CONFIG.currentBlock - 1) * EXP_CONFIG.formalTrialsPerRound + EXP_CONFIG.currentTrial;
+    EXP_CONFIG.currentStimulus = EXP_CONFIG[shuffledKey][globalIndex];
+}
 
     EXP_CONFIG.trialTemp = {
         stimName: EXP_CONFIG.currentStimulus.name,
