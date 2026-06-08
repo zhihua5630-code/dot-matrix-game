@@ -15,3 +15,8 @@
 	* 账户：陈志华 zhihua@31335427.onaliyun.com
 		* 绑定了bucket是dot-matrix的读写权限
 	* 密码：陈志华 掌握，因为绑定她的手机号和邮箱
+
+* 网站后段：
+	* https://xcx.51putong.com/upload-dot-csv
+		* post方法
+	* main。js里调用后端

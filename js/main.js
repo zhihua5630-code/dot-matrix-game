@@ -471,7 +471,7 @@ function exportCSV(data, filename) {
     fetch("https://xcx.51putong.com/upload-dot-csv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv, filename })
+        body: JSON.stringify({csv, filename})
     }).then(() => {
         console.log("✅ 数据已保存到阿里云OSS");
     }).catch((err) => {
