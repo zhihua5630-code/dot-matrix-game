@@ -469,19 +469,24 @@ function exportCSV(data, filename) {
     const headers = Object.keys(data[0]).join(",");
     const rows = data.map(d => Object.values(d).join(",")).join("\n");
     const csv = headers + "\n" + rows;
-    // const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    // const url = URL.createObjectURL(blob);
-    // const a = document.createElement("a");
-    // a.href = url;
-    // a.download = filename;
-    // a.click();
-    // URL.revokeObjectURL(url);
 
     fetch("https://xcx.51putong.com/upload-dot-csv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({csv, filename})
-    }).then(() => {
+    }).then(async() => {
+        // 先解析后端返回的内容（不管成功还是失败）
+        const result = await response.json().catch(() => response.text());
+
+        // 打印完整响应信息，方便排查
+        console.log("📡 OSS上传接口响应状态:", response.status);
+        console.log("📡 OSS上传接口返回数据:", result);
+
+        // 只有 HTTP 状态码在 200-299 之间才算成功
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${JSON.stringify(result)}`);
+        }
+
         console.log("✅ 数据已保存到阿里云OSS");
     }).catch((err) => {
         console.error("❌ 上传失败", err);
