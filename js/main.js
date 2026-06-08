@@ -223,12 +223,20 @@ async function finishBlock() {
 
     // 先判断是否是最后一组，再决定是否清空数据
     if (block >= EXP_CONFIG.totalFormalBlocks) {
+        showTextPanel(`
+            <h3>游戏完成！</h3>
+            <p>感谢你的参与！</p>
+            <p>第一次判断正确率：${acc1}%</p>
+            <p>第二次判断正确率：${acc2}%</p>
+            <p>所有数据已自动保存，请关闭页面。</p>
+        `);
+        $expContainer.hide();
+        //exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_捕捉点阵游戏数据.csv`);
+        //$expContainer.hide();
+        //hideTextPanel();
+    //});
     // 第四组：先显示正确率，不清空
-    endExperiment();
-    // 显示完再上传并清空
-    exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
-    EXP_CONFIG.expData = [];
-    return;
+        return;
     }
 
     // 前1-3组：正常上传+清空
