@@ -220,12 +220,12 @@ async function finishBlock() {
 
     // 先判断是否是最后一组，再决定是否清空数据
     if (block >= EXP_CONFIG.totalFormalBlocks) {
-    // 第四组：先显示正确率，不清空
-    endExperiment();
-    // 显示完再上传并清空
-    exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
-    EXP_CONFIG.expData = [];
-    return;
+        // 第四组：先显示正确率，不清空
+        endExperiment();
+        // 显示完再上传并清空
+        exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
+        EXP_CONFIG.expData = [];
+        return;
     }
 
     // 前1-3组：正常上传+清空
@@ -474,7 +474,7 @@ function exportCSV(data, filename) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({csv, filename})
-    }).then(async() => {
+    }).then(async(response) => {
         // 先解析后端返回的内容（不管成功还是失败）
         const result = await response.json().catch(() => response.text());
 
