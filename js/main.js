@@ -232,7 +232,6 @@ async function finishBlock() {
     }
 
     // 前1-3组：正常上传+清空
-    exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
     EXP_CONFIG.expData = [];
 
     // 展示本组正确率
