@@ -218,31 +218,34 @@ async function finishBlock() {
     const acc1 = total > 0 ? (correct1 / total * 100).toFixed(1) : "0.0";
     const acc2 = total > 0 ? (correct2 / total * 100).toFixed(1) : "0.0";
     
-    // 先上传本组数据
-    exportCSV(EXP_CONFIG.expData, `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`);
+    // 先上传本组数据，成功后才继续
+    const filename = `${EXP_CONFIG.subjectId}_${EXP_CONFIG.subjectName}_第${block}组.csv`;
+    await uploadWithRetry(EXP_CONFIG.expData, filename);
+    const savedMsg = `<p style="color:#4caf50">✅ 第 ${block} 组数据已保存成功（${total} 个试次）</p>`;
 
     // 先判断是否是最后一组
     if (block >= EXP_CONFIG.totalFormalBlocks) {
         showTextPanel(`
             <h3>游戏完成！</h3>
             <p>感谢你的参与！</p>
+            ${savedMsg}
             <p>第一次判断正确率：${acc1}%</p>
             <p>第二次判断正确率：${acc2}%</p>
-            <p>所有数据已自动保存，请关闭页面。</p>
+            <p>可以关闭页面了。</p>
         `);
         $expContainer.hide();
         return;
     }
 
-    // 前1-3组：正常上传+清空
+    // 前1-3组：保存完成后再清空
     EXP_CONFIG.expData = [];
 
     // 展示本组正确率
     showTextPanel(`
         <h3>第 ${block} 组完成</h3>
+        ${savedMsg}
         <p>第一次判断正确率：${acc1}%</p>
         <p>第二次判断正确率：${acc2}%</p>
-        <p>数据已自动保存</p>
         <p>休息一下，按空格键继续下一组</p>
     `, e => {
         if (e.code === "Space") {
@@ -470,32 +473,102 @@ async function runSingleTrial() {
 //}
 
 // ===================== 【100% 和你图片一致】上传代码 =====================
-function exportCSV(data, filename) {
+function toCSV(data) {
     const headers = Object.keys(data[0]).join(",");
     const rows = data.map(d => Object.values(d).join(",")).join("\n");
-    const csv = headers + "\n" + rows;
+    return headers + "\n" + rows;
+}
 
-    fetch("https://xcx.51putong.com/upload-dot-csv", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({csv, filename})
-    }).then(async(response) => {
-        // 先解析后端返回的内容（不管成功还是失败）
-        const result = await response.json().catch(() => response.text());
+// 成功时正常返回；任何失败（断网、超时、HTTP 错误、后端返回失败）都会抛错
+async function exportCSV(data, filename) {
+    const csv = toCSV(data);
+
+    // 15 秒没响应就当作超时
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+
+    try {
+        const response = await fetch("https://xcx.51putong.com/upload-dot-csv", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({csv, filename}),
+            signal: controller.signal
+        });
+
+        // body 只能读一次：先读文本，再尝试解析成 JSON
+        const text = await response.text();
+        let result = text;
+        try { result = JSON.parse(text); } catch (_) {}
 
         // 打印完整响应信息，方便排查
         console.log("📡 OSS上传接口响应状态:", response.status);
         console.log("📡 OSS上传接口返回数据:", result);
 
-        // 只有 HTTP 状态码在 200-299 之间才算成功
+        // HTTP 状态码不在 200-299 之间算失败
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${JSON.stringify(result)}`);
+            const e = new Error(`HTTP ${response.status}: ${text}`);
+            e.status = response.status;
+            throw e;
+        }
+
+        // 后端返回 200 但内容里写着失败，也算失败（后端格式确定后可以改这里）
+        if (result && typeof result === "object" &&
+            (result.success === false || ("code" in result && result.code !== 0 && result.code !== 200))) {
+            throw new Error(`服务器返回失败：${text}`);
         }
 
         console.log("✅ 数据已保存到阿里云OSS");
-    }).catch((err) => {
+    } catch (err) {
         console.error("❌ 上传失败", err);
-    });
+        if (err.name === "AbortError") throw new Error("请求超时");
+        throw err;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+// 把浏览器的报错翻译成被试能看懂的中文
+function describeError(err) {
+    if (!navigator.onLine) return "网络已断开，请检查网络连接";
+    if (err.message === "请求超时") return "服务器响应超时（15秒），可能网络较慢";
+    if (err.name === "TypeError") return "无法连接服务器（网络异常或服务器不可用）";
+    if (err.status >= 500) return `服务器出错（错误码 ${err.status}）`;
+    if (err.status >= 400) return `请求被服务器拒绝（错误码 ${err.status}）`;
+    return err.message;
+}
+
+// 上传一组数据，只有成功才返回
+// 失败时停在失败面板，按 R 重试
+async function uploadWithRetry(data, filename) {
+    const warnClose = e => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warnClose);
+
+    try {
+        while (true) {
+            // 保存中：不传 callback，并解绑按键，防止被试误操作
+            showTextPanel(`<h3>正在保存数据，请稍候…</h3><p>请不要关闭页面</p>`);
+            $(document).off("keydown");
+
+            try {
+                await exportCSV(data, filename);
+                return;
+            } catch (err) {
+                const detail = $("<div>").text(String(err.message).slice(0, 200)).html();
+                await new Promise(resolve => {
+                    showTextPanel(`
+                        <h3 style="color:#f44336">❌ 数据上传失败</h3>
+                        <p>原因：${describeError(err)}</p>
+                        <p style="font-size:12px;color:#999">详细信息：${detail}</p>
+                        <p>请检查网络后按 <strong>R</strong> 键重试，多次失败请联系主试</p>
+                    `, e => {
+                        if (e.code === "KeyR") resolve();
+                    });
+                });
+            }
+        }
+    } finally {
+        window.removeEventListener("beforeunload", warnClose);
+    }
 }
 
 // ===================== 初始化（100% 原版） =====================
