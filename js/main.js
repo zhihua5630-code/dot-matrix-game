@@ -483,9 +483,9 @@ function toCSV(data) {
 async function exportCSV(data, filename) {
     const csv = toCSV(data);
 
-    // 15 秒没响应就当作超时
+    // 20 秒没响应就当作超时
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15000);
+    const timer = setTimeout(() => controller.abort(), 20000);
 
     try {
         const response = await fetch("https://xcx.51putong.com/upload-dot-csv", {
@@ -530,7 +530,7 @@ async function exportCSV(data, filename) {
 // 把浏览器的报错翻译成被试能看懂的中文
 function describeError(err) {
     if (!navigator.onLine) return "网络已断开，请检查网络连接";
-    if (err.message === "请求超时") return "服务器响应超时（15秒），可能网络较慢";
+    if (err.message === "请求超时") return "服务器响应超时（20秒），可能网络较慢";
     if (err.name === "TypeError") return "无法连接服务器（网络异常或服务器不可用）";
     if (err.status >= 500) return `服务器出错（错误码 ${err.status}）`;
     if (err.status >= 400) return `请求被服务器拒绝（错误码 ${err.status}）`;
